@@ -1,0 +1,420 @@
+.top{
+    /* position: fixed;
+    top: 0;
+    left: 0; */
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    box-shadow: 0px -3px 15px 0px grey;
+    z-index: 20;
+}
+.top.attached{
+    position: fixed;
+    top: 0;
+}
+nav {
+    z-index: 20;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    background: white;
+}
+
+nav .navName{
+    font-size: 120%;
+    color: orange;
+}
+
+nav .mainLogoBox {
+    width: 10%;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+nav .locationAccessBox {
+    cursor: pointer;
+    width: 12%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    position: relative;
+}
+
+nav .locationAccessBox>span {
+    font-size: 90%;
+    width: 100%;
+}
+
+nav .locationAccessBox>span:nth-of-type(1) {
+    transform: translate(17%, 20%);
+}
+
+nav .locationAccessBox>span:nth-of-type(2) {
+    transform: translate(16%);
+    font-weight: bold;
+    letter-spacing: .5px;
+}
+
+nav .locationAccessBox i {
+    position: absolute;
+    left: 4%;
+    bottom: 22%;
+    font-size: 140%;
+}
+
+nav .searchBox {
+    width: 50%;
+    height: 40px;
+    position: relative;
+}
+
+nav .searchBox .category {
+    width: 12%;
+    height: calc(100% - 4px);
+    position: relative;
+    z-index: 16;
+    background: orange;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 80%;
+    color: black;
+    cursor: pointer;
+    margin: 2px;
+}
+
+nav .searchBox .category .categoryList {
+    position: absolute;
+    list-style-type: none;
+    top: 100%;
+    left: 0;
+    display: none;
+}
+
+nav .searchBox #mainSearchField {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 15;
+    padding-left: 13%;
+    padding-right: 10%;
+    border: 2px solid black;
+    background: none;
+    color: black;
+    letter-spacing: .5px;
+    outline: none;
+}
+
+nav .searchBox i {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 16;
+    width: 8%;
+    height: calc(100% - 4px);
+    background: orange;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 2px;
+    cursor: pointer;
+    justify-content: center;
+}
+
+nav .searchBox i:hover {
+    background: rgba(240, 205, 49, 0.8);
+}
+
+nav .accountBox {
+    width: auto;
+    margin-left: 0.5%;
+}
+
+nav .accountBox>span {
+    font-size: 95%;
+    font-weight: bolder;
+}
+
+nav .accountBox>span>span.signin {
+    border-radius: 20px;
+    border: 2px solid orange;
+    color: orange;
+    cursor: pointer;
+    transition: .25s;
+    padding: 8px 10px 4px 10px;
+}
+
+nav .accountBox>span>span.signin:hover {
+    background: orange;
+    color: white;
+    transition: .25s;
+}
+
+nav .orderBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+nav .orderBox span {
+    width: 100%;
+}
+
+nav .orderBox span:nth-of-type(1) {
+    font-weight: lighter;
+    font-size: 90%;
+    transform: translate(12px, 4px);
+}
+
+nav .orderBox span:nth-of-type(2) {
+    font-weight: bolder;
+    font-size: 120%;
+    transform: translateY(-2px);
+}
+nav .cartBox {
+    padding: 5px;
+    cursor: pointer;
+}
+
+nav .cartBox i {
+    margin: 0 2px;
+    font-size: 170%;
+}
+nav .cartBox span {
+    font-weight: lighter;
+}
+.links{
+    color: black;
+    text-decoration: none;
+}
+.links:hover{
+    text-decoration: none;
+    color: orange;
+}
+
+
+
+.menuBtn {
+    position: relative;
+    width: 50px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+.menuBtn span{
+    transition: .8s;
+}
+.menuBtn span {
+    height: 3px;
+    margin: 3px 0;
+}
+.menuBtn span:nth-of-type(1) {
+    background: black;
+    width: 90%;
+}
+.menuBtn span:nth-of-type(2) {
+    background: orange;
+    width: 75%;
+}
+.menuBtn span:nth-of-type(3) {
+    background: black;
+    width: 90%;
+}
+
+.menuBtn:hover span:nth-of-type(1) {
+    background: black;
+    width: 85%;
+}
+.menuBtn:hover span:nth-of-type(2) {
+    width: 85%;
+}
+.menuBtn:hover span:nth-of-type(3) {
+    background: black;
+    width: 85%;
+}
+.menuBtn.open span{
+    position: absolute;
+}
+.menuBtn.open span:nth-of-type(1) {
+    background: red;
+    width: 85%;
+    transform: rotate(-225deg);
+}
+.menuBtn.open span:nth-of-type(2) {
+    width: 0%;
+}
+.menuBtn.open span:nth-of-type(3) {
+    background: red;
+    transform: rotate(225deg);
+    width: 85%;
+}
+.proFileBtn{
+    width: 50px;
+    height: 50px;
+    background: #000;
+    border-radius: 50%;
+}
+
+/*  Toolbar */
+.toolBar{
+    padding-top: 70px;
+    width: 100%;
+    height: auto;
+    background: whitesmoke;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    font-size: 90%;
+    overflow: auto;
+    margin-top: -1px;
+    padding-left: 10px;
+}
+.toolBar::-webkit-scrollbar{
+    width: 0px;
+}
+.toolBar > span{
+    white-space: nowrap;
+    width: auto;
+    padding: 5px 10px 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 5px 1px;
+    text-transform: capitalize;
+    cursor: pointer;
+    transition: .25s;
+    border: 1px solid transparent;
+}
+.toolBar > span:hover{
+    border-bottom: 1px solid black;
+}
+
+.toolBar > span > img{
+    width: 30px;
+    height: 30px;
+}
+
+
+/* Responsive */
+@media screen and (max-width: 1300px) {
+    nav .locationAccessBox {
+        width: 10%;
+        font-size: 90%;
+        transform: translateX(-10px);
+    }
+    nav .locationAccessBox i {
+        left: -5%;
+    }
+}
+
+
+/* Responsive */
+
+@media screen and (max-width: 1300px) {
+    nav .locationAccessBox {
+        width: 10%;
+        font-size: 90%;
+        transform: translateX(-10px);
+    }
+    nav .locationAccessBox i {
+        left: -5%;
+    }
+}
+
+/* Responsive */
+@media screen and (max-width: 1300px) {
+    nav .locationAccessBox {
+        font-size: 85%;
+        transform: translateX(-10px);
+    }
+}
+
+@media screen and (max-width: 1210px) {
+    nav .locationAccessBox {
+        width: 10%;
+    }
+    nav .locationAccessBox i {
+        left: -5%;
+    }
+    nav .searchBox .category {
+        width: 15%;
+    }
+}
+
+@media screen and (max-width: 900px) {
+    nav .locationAccessBox {
+        width: auto;
+        font-size: 100%;
+    }
+    nav .locationAccessBox i {
+        position: relative;
+    }
+    nav .locationAccessBox>span {
+        display: none;
+    }
+    nav .mainLogoBox {
+        width: 18%;
+    }
+}
+
+@media screen and (max-width: 850px) {
+    nav .searchBox {
+        width: 55%;
+    }
+    nav .orderBox {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 650px) {
+    nav .searchBox,
+    nav .accountBox,
+    nav .locationAccessBox,
+    nav .cartBox {
+        display: none;
+    }
+    nav {
+        justify-content: space-between;
+        padding: 0 20px;
+    }
+    nav .mainLogoBox {
+        padding: 0;
+        width: 33%;
+    }
+    .toolBar > span > span {
+        display: none;
+    }
+}
+@media screen and (min-width: 650px) {
+    .menuBtn,
+    .proFileBtn{
+        display: none;
+    }
+    .toolBar > span > img{
+        display: none;
+    }
+
+}

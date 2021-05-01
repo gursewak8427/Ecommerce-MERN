@@ -1,0 +1,63 @@
+import React, { useState } from 'react';
+import { Redirect, Link } from 'react-router-dom'
+import axios from 'axios'
+import { authenticate, isAuth } from '../../helpers/auth'
+
+import './VLogin.css'
+
+function VLogin(props) {
+    const [formState, setFormState] = useState({
+        phone: '',
+        password: '',
+    })
+    const onChange = (e) => {
+        setFormState({ ...formState, [e.target.name]: e.target.value })
+    }
+    const onSubmit = (e) => {
+        e.preventDefault();
+        const data = {
+            phone: formState.phone,
+            password: formState.password
+        };
+        axios
+        .post('http://localhost:8082/api/vendor/156/signin', data)
+        .then(result => {
+            authenticate(result, () => {
+                setFormState({ 
+                    ...formState,
+                    phone: '',
+                    password: '',
+                });
+                props.history.push('/vendor')
+            })
+        })
+        .catch(err => {
+          console.log("Error in Login : ", err.response.data.error);
+        })
+
+    }
+    return (
+        <>
+            {!isAuth() ? <Redirect to='/vendor/login' /> : null}
+            <div className="v-login">
+                <div className="form">
+                    <label htmlFor="">Login Here For <span>Style Factory</span></label>
+                    <div className="form-field">
+                        <label htmlFor="">Enter Your Number or Username</label>
+                        <input type="text" name='phone' value={formState.phone} onChange={onChange} />
+                    </div>
+                    <div className="form-field">
+                        <label htmlFor="">Enter Password</label>
+                        <input type="password" name='password' value={formState.password} onChange={onChange} />
+                    </div>
+                    <div className="form-field">
+                        <button type='button' onClick={onSubmit}>Login</button>
+                    </div>
+
+                </div>
+            </div>
+        </>
+    );
+}
+
+export default VLogin;

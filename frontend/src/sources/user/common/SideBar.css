@@ -1,0 +1,94 @@
+aside{
+    width: 100%;
+    min-height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+    position: fixed;
+    bottom: 0;
+    background: transparent;
+    left: 0;
+    transform: translateX(-100%);
+    display: flex !important;
+    flex-direction: row;
+    z-index: 20;
+    transition: .8s;
+}
+aside .data{
+    overflow: auto;
+    width: 70%;
+    max-width: 350px;
+    background: white;
+    min-height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+}
+aside.open .data{
+    box-shadow: 0px 20px 15px 1px grey;
+}
+aside .clickAble{
+    width: 30%;
+    background: transparet;
+    min-height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+}
+aside.open{
+    transition: .5s;
+    transform: translateX(0%);
+}
+#sideMenu .data{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+#sideMenu .data .list{
+    width: 100%;
+    height: auto;
+    position: relative;
+    list-style-type: none;
+    margin: 0;
+}
+#sideMenu .data .list label{
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+    border-bottom: 1px solid black;
+    background: whitesmoke;
+    cursor: pointer;
+    text-transform: capitalize;
+}
+#sideMenu .data .list > ul{
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+#sideMenu .data .list.open label{
+    background: darkgrey;
+}
+#sideMenu .data .list.open ul{
+    display: block;
+}
+#sideMenu .data .list ul li{
+    width: 100%;
+    padding: 10px;
+    text-transform: capitalize;
+}
+#sideMenu .data .list ul li:hover{
+    background: whitesmoke;
+    cursor: pointer;
+}
+
+
+
+
+
+@media screen and (min-width: 650px){
+    aside#sideMenu{
+        min-height: 100vh;
+        max-height: 100vh;
+    }
+    aside#sideMenu .data{
+        min-height: 100vh;
+        max-height: 100vh;
+    }
+}

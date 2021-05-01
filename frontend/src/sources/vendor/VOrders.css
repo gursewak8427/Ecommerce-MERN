@@ -1,0 +1,93 @@
+.vorders{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+.vorders .order{
+    width: 98%;
+    height: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0;
+    padding: 0;
+}
+.vorders .order > .content{
+    width: 100%;
+    height: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 5px;
+    border-bottom: 1px solid grey;
+    cursor: pointer;
+}
+.vorders .order .details{
+    width: 100%;
+    top: 100%;
+    left: 0;
+    display: none;
+    flex-direction: column;
+}
+.vorders .order .details .status{
+    width: 100%;
+    display: flex;
+    font-display: row;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 5px;
+}
+.vorders .order .details .status select{
+    padding: 5px 10px;
+    border: none;
+    outline: none;
+}
+
+.vorders .order .details .items{
+    width:100%;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+.vorders .order .details .items .item{
+    margin: 5px;
+    min-width: 140px;
+    max-width: 140px;
+    cursor: pointer;
+}
+.vorders .order .details .items .item img{
+    width: 100%;
+    height: 150px;
+}
+.vorders .order .details .items .item span{
+    font-size: 80%;
+    margin: 2px;
+}
+
+
+
+.vorders .order .details.active{
+    display: flex;
+}
+.vorders .order > .content:hover{
+    background: rgba(128, 128, 128, 0.733);
+}
+.vorders .order > .content > span{
+    text-align: center;
+    padding: 2px 5px;
+    border-right: 1px solid grey;
+}
+.vorders .order > .content > span.index{
+    min-width: 40px;
+    text-align: center;
+}
+

@@ -1,0 +1,176 @@
+.cart{
+    max-width: 1500px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+    min-height: 100vh;
+    height: auto;
+    padding-top: 10px;
+    margin: 0 auto;
+}
+.cart .left{
+    width: 70%;
+    padding: 20px;
+    background: whitesmoke;
+}
+/* empty cart */
+.cart .left .emptyCart{
+    width: 100%;
+    height: 400px;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    background: white;
+}
+.cart .left .emptyCart img{
+    width: 40%;
+    margin: 0 10px;
+}
+.cart .left .emptyCart .data{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    text-align-last: left;
+    padding-left: 20px;
+}
+.cart .left .emptyCart .data span.a{
+    font-size: 140%;
+    font-weight: bolder;
+    letter-spacing: 2px;
+    padding:5px 20px;
+}
+.cart .left .emptyCart .data span.b{
+    text-decoration: none;
+    padding:0px 20px;
+    color: darkcyan;
+}
+.cart .left .emptyCart .data span.c{
+    width: 100%;
+    text-decoration: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.cart .left .emptyCart .data span.c span{
+    padding:7px 20px;
+    background: orange;
+    margin: 10px 20px;
+    font-weight: bolder;
+    border-radius: 2px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+}
+.cart .left .emptyCart .data span.c span:hover{
+    background: rgb(175, 116, 5);
+    color: white;
+}
+
+
+
+
+
+
+.cart .item{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    background: white;
+    padding: 20px;
+    margin: 10px 0;
+    box-shadow: 0px 0px 15px -1px grey;
+}
+.cart .item img{
+    width: 215px;
+    height: 230px;
+}
+.cart .item .content{
+    display: flex;
+    flex-direction: column;
+    text-transform: capitalize;
+}
+.cart .item span{
+    margin: 5px;
+}
+
+.cart .item span.attributes{
+    padding: 0;
+    margin: 0 5px;
+}
+.cart .item span.attributes span{
+    margin: 1px;
+    font-size: 80%;
+    color: rgb(255, 136, 0);
+}
+
+.cart .item button{
+    margin: 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-transform: capitalize;
+    color: white;
+    background: red;
+    margin-top: auto;
+}
+
+/* right checkout */
+.cart .right{
+    background: whitesmoke;
+    position: relative;
+    padding: 40px 20px;
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+}
+.cart .right .box{
+    position: sticky;
+    top: 20%;
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: white;
+    box-shadow: 0px 0px 15px -1px grey;
+    padding: 40px 0;
+}
+.cart .right .box .total{
+    margin: 10px 0;
+    font-size: 100%;
+    font-weight: bolder;
+    letter-spacing: 1.5px;
+    color: grey;
+}
+.cart .right .box .total span{
+    font-size: 110%;
+    color: black;
+}
+
+.cart .right .box button.checkoutBtn{
+    width: 80%;
+    margin: 10px 0;
+    background: blue;
+    border-radius: 5px;
+    padding: 10px;
+    color: white;
+    font-weight: bolder;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+}
+.cart .right .box button.checkoutBtn:hover{
+    background: darkblue;
+}
+
+
+
+
+
+
+
