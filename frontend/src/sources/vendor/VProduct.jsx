@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Redirect, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { authenticate, isAuth } from '../../helpers/auth'
@@ -10,7 +10,7 @@ import SelectCat from './productComponents/SelectCat';
 import SelectSubCat from './productComponents/SelectSubCat';
 import AddProduct from './productComponents/AddProduct';
 import AddVarient from './productComponents/AddVarient';
-import { useEffect } from 'react/cjs/react.development';
+import { KEYS } from '../keys';
 
 function VProduct() {
     const [state, setState] = useState({
@@ -24,14 +24,14 @@ function VProduct() {
     const { id } = useParams()
     useEffect(() => {
         if (id) {
-            axios.get('http://localhost:8082/api/vendor/product/156/getRawData')
+            axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getRawData`)
                 .then(resultRawData => {
                     state.catList = []
                     state.subCatList = []
                     state.catList = resultRawData.data.myRawData.categories
                     state.subCatList = resultRawData.data.myRawData.subCategories
 
-                    axios.post(`http://localhost:8082/api/vendor/product/156/getProductWithID`, { id })
+                    axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getProductWithID`, { id })
                         .then(result => {
                             if (!result.data.myCollection) {
                                 setState({

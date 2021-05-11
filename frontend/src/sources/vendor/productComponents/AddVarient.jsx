@@ -6,6 +6,7 @@ import { ToastContainer, toast } from 'react-toastify'
 import { authenticate, isAuth } from '../../../helpers/auth'
 
 import './AddVarient.css'
+import { KEYS } from '../../keys';
 
 function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest }) {
     const [state, setState] = useState({
@@ -19,10 +20,12 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
         CoverPictures: [],
         picUrls: [],
         varPrices: [],
+        varItemQty: [],
+        varMrps: [],
         simplePrice: '',
         simpleMrp: '',
+        simpleQty: '',
         coverImagesList: [],
-
 
         // product-detail
         productName: '',
@@ -31,22 +34,49 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
         productDisc: '',
         productkeywords: '',
         productStatus: 0,
-        simpleImageList: []
+        simpleImageList: [],
+
+        simpleDtl: [],
+        simpleDtlKey: '',
+        simpleDtlValue: '',
+
+        varDtl: [],
+        varDtlKey: [],
+        varDtlValue: [],
     })
     const { id } = useParams()
     useEffect(() => {
-        axios.post(`http://localhost:8082/api/vendor/product/156/getProduct?p_id=${state.finalProduct[0]}`)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getProduct?p_id=${state.finalProduct[0]}`)
             .then(result => {
-                axios.get(`http://localhost:8082/api/vendor/product/156/getAttribute`)
+                axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getAttribute`)
                     .then(resultAttr => {
                         state.varPrices = []
+                        state.varMrps = []
                         result.data.myProduct.productVarients.map(obj => {
                             state.varPrices.push(obj.general.price)
+                        })
+                        result.data.myProduct.productVarients.map(obj => {
+                            state.varMrps.push(obj.general.mrp)
                         })
                         state.coverImagesList = []
                         result.data.myProduct.CoverImages.map(img => {
                             state.coverImagesList.push(img)
                         })
+                        state.simpleDtl = []
+                        result.data.myProduct?.simpleDtl.map(dtl => {
+                            state.simpleDtl.push(dtl)
+                        })
+                        state.varDtl = []
+                        result.data.myProduct.productVarients.map(varient => {
+                            state.varDtl.push(varient.varDtl)
+                            state.varDtlKey.push('')
+                            state.varDtlValue.push('')
+                        })
+                        state.varItemQty = []
+                        result.data.myProduct.productVarients.map(obj => {
+                            state.varItemQty.push(obj.general.itemQty)
+                        })
+                        // console.log('varDtl',state.varDtl)
                         if (id) {
                             setState({
                                 ...state,
@@ -59,14 +89,27 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
 
                                 attributes: resultAttr.data.myAttributes,
                                 varients: [],
+
                                 varPrices: [],
-                                varPrice: state.varPrices,
+                                varItemQty: [],
+                                varMrps: [],
+
+                                varPrices: state.varPrices,
+                                varItemQty: state.varItemQty,
+                                varMrps: state.varMrps,
+
                                 coverImagesList: state.coverImagesList,
                                 varientList: result.data.myProduct.productVarients,
                                 productType: result.data.myProduct.productType,
                                 simplePrice: result.data.myProduct?.productPricing?.price,
                                 simpleMrp: result.data.myProduct?.productPricing?.mrp,
-                                simpleImageList: result.data.myProduct.productImages
+                                simpleImageList: result.data.myProduct.productImages,
+                                simpleQty: result.data.myProduct?.itemQty,
+
+                                simpleDtl: state.simpleDtl,
+                                varDtl: state.varDtl,
+                                varDtlKey: state.varDtlKey,
+                                varDtlValue: state.varDtlValue
                             })
                             result.data.myProduct.productStatus == 1 ? (
                                 document.getElementById('proActiveStat').checked = true
@@ -90,7 +133,7 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
     }, [])
     const onChange = (e) => {
         if (e.target.name == "productType") {
-            axios.post(`http://localhost:8082/api/vendor/product/156/updateProductType?p_id=${state.finalProduct[0]}`, { 'pt': e.target.value })
+            axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProductType?p_id=${state.finalProduct[0]}`, { 'pt': e.target.value })
                 .then(result => {
                     console.log(result)
                 }).catch(err => {
@@ -145,18 +188,34 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
             alert('plz select atleast one attribute of variation . . .')
             return
         }
-        axios.post(`http://localhost:8082/api/vendor/product/156/insertProductVarient?p_id=${state.finalProduct[0]}`, { varients: state.varients })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertProductVarient?p_id=${state.finalProduct[0]}`, { varients: state.varients })
             .then(result => {
                 setState({
                     ...state,
                     varients: [],
-                    varPrices: []
+                    varPrices: [],
+                    varItemQty: [],
+                    varMrps: []
                 });
+                state.varDtl = []
+                result.data.myVarients.map(varient => {
+                    state.varDtl.push(varient.varDtl)
+                    state.varDtlKey.push('')
+                    state.varDtlValue.push('')
+                })
                 state.varPrices = []
                 result.data.myVarients.map(obj => {
                     state.varPrices.push(obj.general.price)
                 })
-                setState({ ...state, varPrice: state.varPrices, varientList: result.data.myVarients })
+                state.varItemQty = []
+                result.data.myVarients.map(obj => {
+                    state.varItemQty.push(obj.general.itemQty)
+                })
+                state.varMrps = []
+                result.data.myVarients.map(obj => {
+                    state.varMrps.push(obj.general.mrp)
+                })
+                setState({ ...state, varPrices: state.varPrices, varItemQty: state.varItemQty, varMrps: state.varMrps, varientList: result.data.myVarients, varDtl: state.varDtl })
             })
             .catch(err => {
                 console.log(err)
@@ -211,25 +270,38 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                     })
                 })
                 let data = {
-                    "price": state.varPrice[indexx],
+                    "price": state.varPrices[indexx],
+                    "varItemQty": state.varItemQty[indexx],
+                    "mrp": state.varMrps[indexx],
                     "images": state.picUrls,
-                    'pt': state.productType
+                    "pt": state.productType,
+                    "varDtl": state.varDtl[indexx]
                 }
-                axios.post(`http://localhost:8082/api/vendor/product/156/updateProductVarient?p_id=${state.finalProduct[0]}&var_id=${var_id}`, data)
+                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProductVarient?p_id=${state.finalProduct[0]}&var_id=${var_id}`, data)
                     .then(result => {
                         state.pictures = []
                         setState({
                             ...state,
                             pictures: state.pictures,
                             picUrls: [],
-                            varPrice: [],
-                            varientList: []
+                            varPrices: [],
+                            varItemQty: [],
+                            varMrps: [],
+                            varientList: [],
                         });
                         state.varPrices = []
                         result.data.myVarients.map(obj => {
                             state.varPrices.push(obj.general.price)
                         })
-                        setState({ ...state, varPrice: state.varPrices, varientList: result.data.myVarients })
+                        state.varItemQty = []
+                        result.data.myVarients.map(obj => {
+                            state.varItemQty.push(obj.general.itemQty)
+                        })
+                        state.varMrps = []
+                        result.data.myVarients.map(obj => {
+                            state.varMrps.push(obj.general.mrp)
+                        })
+                        setState({ ...state, varPrices: state.varPrices, varMrps: state.varMrps, varientList: result.data.myVarients })
                         // document.getElementById(`updateVarBtn${var_id}`).disabled = false
                     })
                     .catch(err => {
@@ -245,7 +317,14 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
     const onPriceChange = (e, index) => {
         state.varPrices[index] = e.target.value
         setState({ ...state, varPrice: state.varPrices });
-
+    }
+    const onItemQtyChange = (e, index) => {
+        state.varItemQty[index] = e.target.value
+        setState({ ...state, varItemQty: state.varItemQty });
+    }
+    const onMrpChange = (e, index) => {
+        state.varMrps[index] = e.target.value
+        setState({ ...state, varMrps: state.varMrps });
     }
     const saveSimpleProduct = () => {
         let uploadPromises = state.ppictures.map(image => {
@@ -270,16 +349,24 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                     "mrp": state.simpleMrp,
                     'pt': state.productType, // pt = product Type :)
                     "images": state.picUrls,
+                    "simpleDtl": state.simpleDtl,
+                    "simpleQty": state.simpleQty
                 }
-                axios.post(`http://localhost:8082/api/vendor/product/156/updateProductVarient?p_id=${state.finalProduct[0]}`, data)
+                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProductVarient?p_id=${state.finalProduct[0]}`, data)
                     .then(result => {
+                        state.simpleDtl = []
+                        result.data.myProduct?.simpleDtl.map(dtl => {
+                            state.simpleDtl.push(dtl)
+                        })
                         setState({
                             ...state,
                             simplePrice: result.data.myProduct.productPricing.price,
                             simpleMrp: result.data.myProduct.productPricing.mrp,
                             simpleImageList: result.data.myProduct.productImages,
-                            picUrls: []
+                            picUrls: [],
+                            simpleDtl: state.simpleDtl
                         });
+                        alert('saved')
                     })
                     .catch(err => {
                         console.log(err)
@@ -315,7 +402,7 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                 let data = {
                     "images": state.picUrls,
                 }
-                axios.post(`http://localhost:8082/api/vendor/product/156/updateCoverImages?p_id=${state.finalProduct[0]}`, data)
+                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateCoverImages?p_id=${state.finalProduct[0]}`, data)
                     .then(result => {
                         state.CoverPictures = []
                         state.coverImagesList = []
@@ -355,7 +442,7 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
             "productStatus": state.productStatus,
         }
         // upload product and get product id
-        axios.post(`http://localhost:8082/api/vendor/product/156/updateProduct`, { myProduct })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProduct`, { myProduct })
             .then(result => {
                 setState({
                     ...state,
@@ -376,18 +463,28 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
     const deleteVarImage = (pId, varId, imgId) => {
         let data = { pId, varId, imgId }
         // upload product and get product id
-        axios.post(`http://localhost:8082/api/vendor/product/156/deleteVarImage`, data)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteVarImage`, data)
             .then(result => {
                 setState({
                     ...state,
-                    varPrice: [],
-                    varientList: []
+                    varPrices: [],
+                    varItemQty: [],
+                    varMrps: [],
+                    varientList: [],
                 });
                 state.varPrices = []
                 result.data.myProduct.productVarients.map(obj => {
                     state.varPrices.push(obj.general.price)
                 })
-                setState({ ...state, varPrice: state.varPrices, varientList: result.data.myProduct.productVarients })
+                state.varItemQty = []
+                result.data.myProduct.productVarients.map(obj => {
+                    state.varItemQty.push(obj.general.itemQty)
+                })
+                state.varMrps = []
+                result.data.myProduct.productVarients.map(obj => {
+                    state.varMrps.push(obj.general.price)
+                })
+                setState({ ...state, varPrices: state.varPrices, varItemQty: state.varItemQty, varMrps: state.varMrps, varientList: result.data.myProduct.productVarients })
             })
             .catch(err => {
                 console.log(err)
@@ -396,7 +493,7 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
     const deleteSimpleImage = (pId, imgId) => {
         let data = { pId, imgId }
         // upload product and get product id
-        axios.post(`http://localhost:8082/api/vendor/product/156/deleteSimpleImage`, data)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteSimpleImage`, data)
             .then(result => {
                 setState({
                     ...state,
@@ -406,6 +503,63 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
             .catch(err => {
                 console.log(err)
             })
+    }
+    const addSimpleDtl = () => {
+        let data = [state.simpleDtlKey, state.simpleDtlValue]
+        state.simpleDtl.push(data)
+        console.log(state.simpleDtl)
+        setState({ ...state, simpleDtl: state.simpleDtl, simpleDtlKey: '', simpleDtlValue: '' })
+    }
+    const deleteSimpleDtl = index => {
+        state.simpleDtl.splice(index, 1)
+        setState({ ...state, simpleDtl: state.simpleDtl })
+    }
+
+    const addVarDtl = (index) => {
+        let data = [state.varDtlKey[index], state.varDtlValue[index]]
+        state.varDtl[index].push(data)
+        state.varDtlKey[index] = ''
+        state.varDtlValue[index] = ''
+        setState({ ...state, varDtl: state.varDtl, varDtlKey: state.varDtlKey, varDtlValue: state.varDtlValue })
+    }
+    const deleteVarDtl = (index, id) => {
+        state.varDtl[index].splice(id, 1)
+        setState({ ...state, varDtl: state.varDtl })
+    }
+    const onVarDtlKeyChange = (e, index) => {
+        state.varDtlKey[index] = e.target.value
+        setState({ ...state, varDtlKey: state.varDtlKey })
+    }
+    const onVarDtlValueChange = (e, index) => {
+        state.varDtlValue[index] = e.target.value
+        setState({ ...state, varDtlValue: state.varDtlValue })
+    }
+    const deleteVar = (varId, indexx) => {
+        let data = { pId: finalProduct[0], varId, indexx }
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteVar`, data)
+            .then(result => {
+                setState({
+                    ...state,
+                    varPrices: [],
+                    varItemQty: [],
+                    varMrps: [],
+                    varientList: [],
+                });
+                state.varPrices = []
+                result.data.myProduct.productVarients.map(obj => {
+                    state.varPrices.push(obj.general.price)
+                })
+                state.varItemQty = []
+                result.data.myProduct.productVarients.map(obj => {
+                    state.varItemQty.push(obj.general.itemQty)
+                })
+                state.varMrps = []
+                result.data.myProduct.productVarients.map(obj => {
+                    state.varMrps.push(obj.general.price)
+                })
+                setState({ ...state, varPrices: state.varPrices, varItemQty: state.varItemQty, varMrps: state.varMrps, varientList: result.data.myProduct.productVarients })
+            })
+            .catch(err => console.log(err))
     }
     return (
         <>
@@ -445,7 +599,7 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                                 <label htmlFor="proDeactiveStat">Deactive</label>
                             </div>
                         </div>
-                        <button onClick={onUpdate}>Update</button>
+                        <button onClick={onUpdate} className='update'>Update</button>
                     </div>
                 ) : null
             }
@@ -499,7 +653,40 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                                     <label htmlFor="">Price</label>
                                     <input type="text" name='simplePrice' value={state.simplePrice} onChange={onChange} />
                                 </div>
-                                <button onClick={saveSimpleProduct}>Save</button>
+                                <div className="form-area">
+                                    <label htmlFor="">Quantity</label>
+                                    <input type="text" name='simpleQty' value={state.simpleQty} onChange={onChange} />
+                                </div>
+                                <div className="simpleDtl">
+                                    <label htmlFor="">Add Detail</label>
+                                    <span>
+                                        <div className="form-area">
+                                            <label htmlFor="">Key</label>
+                                            <input type="text" name='simpleDtlKey' value={state.simpleDtlKey} onChange={onChange} />
+                                        </div>
+                                        <div className="form-area">
+                                            <label htmlFor="">Value</label>
+                                            <input type="text" name='simpleDtlValue' value={state.simpleDtlValue} onChange={onChange} />
+                                        </div>
+                                        <div className="form-area">
+                                            <button onClick={addSimpleDtl}>Add</button>
+                                        </div>
+                                    </span>
+                                    <div className="listDtl">
+                                        {
+                                            state.simpleDtl.length == 0 ? 'No details, Please Add Detail' : (
+                                                state.simpleDtl.map((dtl, index) => (
+                                                    <ul key={index}>
+                                                        <span onClick={() => deleteSimpleDtl(index)}>X</span>
+                                                        <li>{dtl[0]}</li>
+                                                        <li>{dtl[1]}</li>
+                                                    </ul>
+                                                ))
+                                            )
+                                        }
+                                    </div>
+                                </div>
+                                <button className='update' onClick={saveSimpleProduct}>Save</button>
                             </>
                         ) : state.productType == 1 ? (
                             <>
@@ -527,23 +714,33 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                                 </div>
 
                                 <div className="varientList">
+                                    {
+                                        state.varientList.length == 0 ? (
+                                            <span className='_nV'>
+                                                No Varient. &#128532; Add New varient Now
+                                            </span>
+                                        ) : null
+                                    }
                                     {state.varientList.map((obj, index) => (
                                         <div key={obj._id} className="sub-list">
                                             <div className="topList">
                                                 <span>
                                                     {
                                                         obj.varienteAttributes.map((a, indexx) => (
-                                                            <span key={indexx}>
-                                                                {obj.varienteAttributes.length != (indexx + 1) ? (
-                                                                    <>
-                                                                        {`${a.value}, `}
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        {`${a.value}`}
-                                                                    </>
-                                                                )}
-                                                            </span>
+                                                            <>
+                                                                <span className="_llv">{getAttrName(a.attr_id)}</span>
+                                                                <span key={indexx}>
+                                                                    {obj.varienteAttributes.length != (indexx + 1) ? (
+                                                                        <>
+                                                                            {`${a.value}, `}
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            {`${a.value}`}
+                                                                        </>
+                                                                    )}
+                                                                </span>
+                                                            </>
                                                         ))
                                                     }
                                                 </span>
@@ -555,7 +752,10 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                                                         <div className="listImages">
                                                             {
                                                                 obj.general.images.length == 0 ? (
-                                                                    <p>No Images</p>
+                                                                    <>
+                                                                        <p>No Images 😔</p>
+                                                                        <p>Upload Now 😍</p>
+                                                                    </>
                                                                 ) : null
                                                             }
                                                             {obj.general.images.map((img, imgIndex) => (
@@ -577,11 +777,49 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                                                     </div>
                                                 </div>
                                                 <div className="form-area">
-                                                    <label htmlFor="">Varient Price</label>
-                                                    <input type="text" name={`varPrice`} onChange={(e) => onPriceChange(e, index)} value={state.varPrice[index]} />
+                                                    <label htmlFor="">MRP</label>
+                                                    <input type="text" name={`varMrp`} onChange={(e) => onMrpChange(e, index)} value={state.varMrps[index]} />
                                                 </div>
                                                 <div className="form-area">
-                                                    <button onClick={() => updateVar(obj._id, index)} id={`updateVarBtn${obj._id}`}>Update</button>
+                                                    <label htmlFor="">Price</label>
+                                                    <input type="text" name={`varPrices`} onChange={(e) => onPriceChange(e, index)} value={state.varPrices[index]} />
+                                                </div>
+                                                <div className="form-area">
+                                                    <label htmlFor="">Qty</label>
+                                                    <input type="text" name={`varItemQty`} onChange={(e) => onItemQtyChange(e, index)} value={state.varItemQty[index]} />
+                                                </div>
+                                                <div className="simpleDtl">
+                                                    <label htmlFor="">Add Detail</label>
+                                                    <span>
+                                                        <div className="form-area">
+                                                            <label htmlFor="">Key</label>
+                                                            <input type="text" name='varDtlKey' value={state.varDtlKey[index]} onChange={(e) => onVarDtlKeyChange(e, index)} />
+                                                        </div>
+                                                        <div className="form-area">
+                                                            <label htmlFor="">Value</label>
+                                                            <input type="text" name='varDtlValue' value={state.varDtlValue[index]} onChange={(e) => onVarDtlValueChange(e, index)} />
+                                                        </div>
+                                                        <div className="form-area">
+                                                            <button onClick={() => addVarDtl(index)}>Add</button>
+                                                        </div>
+                                                    </span>
+                                                    <div className="listDtl">
+                                                        {
+                                                            state.varDtl[index].length == 0 ? 'No details 😔, Please Add Detail' : (
+                                                                state.varDtl[index].map((dtl, indexx) => (
+                                                                    <ul key={indexx}>
+                                                                        <span onClick={() => deleteVarDtl(index, indexx)}>X</span>
+                                                                        <li>{dtl[0]}</li>
+                                                                        <li>{dtl[1]}</li>
+                                                                    </ul>
+                                                                ))
+                                                            )
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div className="form-area btns">
+                                                    <button onClick={() => updateVar(obj._id, index)} className='update' id={`updateVarBtn${obj._id}`}>Update</button>
+                                                    <button onClick={() => deleteVar(obj._id, index)} className='delete' id={`deleteVarBtn${obj._id}`}>Delete</button>
                                                 </div>
                                             </div>
                                         </div>

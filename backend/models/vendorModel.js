@@ -13,7 +13,10 @@ const VendorSchema = new mongoose.Schema({
     password: {
         type: String,
     },
-    orders: [mongoose.Schema.Types.Mixed]
+    orders: {
+        type: [mongoose.Schema.Types.Mixed],
+        default: []
+    }
 });
 
 module.exports = Vendor = mongoose.model('vendor', VendorSchema);

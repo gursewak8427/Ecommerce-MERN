@@ -4,6 +4,7 @@ import { useStateValue } from '../../../StateProvider/StateProvider';
 import { useHistory } from "react-router-dom";
 import axios from 'axios'
 import './Payment.css'
+import { KEYS } from '../../keys';
 
 const Payment = (props) => {
     let history = useHistory();
@@ -21,26 +22,38 @@ const Payment = (props) => {
 
     const options = {
         key: 'rzp_test_GwXSBqi5xr4Ca2',
-        amount: '100', //  = INR 1
-        name: 'Acme shop',
-        description: 'some description',
+        amount: parseInt(store?.currentOrder[0]?.orderAmount) * 100,
+        name: 'Style Factory',
+        description: 'Best of Luck',
         image: 'https://cdn.razorpay.com/logos/7K3b6d18wHwKzL_medium.png',
         handler: function (response) {
             console.log('success')
-
+            var ordr = store.currentOrder[0]
+            ordr.orderPayment = {
+                paymentType: 2,
+                paymentDetail: {
+                    TransitionId: 'abcdefghij'
+                }
+            }
             // order to database
-
-            axios.post(`http://localhost:8082/api/user/order/156/add`, { userId: store.user.id, order: store.currentOrder[0] })
+            axios.post(`${KEYS.NODE_URL}/api/user/order/156/add`, { userId: store.user.id, order: ordr })
                 .then(result => {
+
+                    // decrease quantity of products
+                    ordr.items.map(item => {
+                        let var_id = item.productType == 1 ? item.varient._id : 0
+                        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/setQty?p_id=${item.id}&var_id=${var_id}`, { 'pt': item.productType, 'qty': item.itemQty }).catch(err => console.log(err))
+                    })
                     dispatch({ type: 'SET_ORDERS', orders: result.data.orders })
                     // empty cart after order
-                    axios.post(`http://localhost:8082/api/user/cart/156/set`, { userId: store.user.id, cart: [] })
+                    axios.post(`${KEYS.NODE_URL}/api/user/cart/156/set`, { userId: store.user.id, cart: [] })
                         .then(result => {
                             dispatch({ type: 'SET_CART', items: [] })
                             dispatch({ type: 'SET_CURRENT_ORDER', order: [] })
                             history.push(`/orders`);
                         })
                         .catch(err => console.log(err))
+
                 })
                 .catch(err => {
                     console.log(err.response.data.error)
@@ -63,7 +76,35 @@ const Payment = (props) => {
             hide_topbar: false
         }
     };
+    const orderCOD = () => {
+        var ordr = store.currentOrder[0]
+        ordr.orderPayment = {
+            paymentType: 1,
+            paymentDetail: 'nothing'
+        }
+        axios.post(`${KEYS.NODE_URL}/api/user/order/156/add`, { userId: store.user.id, order: ordr })
+            .then(result => {
 
+                // decrease quantity of products
+                ordr.items.map(item => {
+                    let var_id = item.productType == 1 ? item.varient._id : 0
+                    axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/setQty?p_id=${item.id}&var_id=${var_id}`, { 'pt': item.productType, 'qty': item.itemQty }).catch(err => console.log(err))
+                })
+                dispatch({ type: 'SET_ORDERS', orders: result.data.orders })
+                // empty cart after order
+                axios.post(`${KEYS.NODE_URL}/api/user/cart/156/set`, { userId: store.user.id, cart: [] })
+                    .then(result => {
+                        dispatch({ type: 'SET_CART', items: [] })
+                        dispatch({ type: 'SET_CURRENT_ORDER', order: [] })
+                        history.push(`/orders`);
+                    })
+                    .catch(err => console.log(err))
+
+            })
+            .catch(err => {
+                console.log(err)
+            })
+    }
     const openPayModal = () => {
         let order = store.currentOrder
         order[0].orderAddress = state.place
@@ -102,9 +143,8 @@ const Payment = (props) => {
                         coordinates={true}
                         onChange={(e) => { setState({ ...state, place: e }) }}
                     />
-                    {
-                        (state.place == null) || (state?.place?.place == "") ? <button className='disabled' onClick={openPayModal}>Checkout</button> : <button onClick={openPayModal}>Checkout</button>
-                    }
+                    {(state.place == null) || (state?.place?.place == "") ? <button className='disabled' onClick={openPayModal}>Checkout</button> : <button onClick={openPayModal}>Checkout</button>}
+                    {(state.place == null) || (state?.place?.place == "") ? <button className='disabled' onClick={orderCOD}>CASH ON DELIVERY</button> : <button onClick={orderCOD}>CASH ON DELIVERY</button>}
                 </div>
             </div>
         </>

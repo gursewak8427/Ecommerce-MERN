@@ -14,15 +14,15 @@ router.post('/get', async (req, res) => {
     })
 })
 
-router.post('/set', async (req, res) => {
-    const { userId, cart } = req.body
-    var user = await User.findOne({ _id: userId })
-    user.cart = cart
-    await user.save()
-    res.json({
-        cart: user.cart
-    })
-})
+// router.post('/set', async (req, res) => {
+//     const { userId, cart } = req.body
+//     var user = await User.findOne({ _id: userId })
+//     user.cart = cart
+//     await user.save()
+//     res.json({
+//         cart: user.cart
+//     })
+// })
 
 router.post('/changeStatus', async (req, res) => {
     const { userId, orders } = req.body

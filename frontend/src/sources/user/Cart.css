@@ -69,52 +69,125 @@
     background: rgb(175, 116, 5);
     color: white;
 }
-
-
-
-
-
-
 .cart .item{
     width: 100%;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     background: white;
     padding: 20px;
     margin: 10px 0;
     box-shadow: 0px 0px 15px -1px grey;
 }
-.cart .item img{
-    width: 215px;
-    height: 230px;
+.cart .item .top{
+    z-index: inherit;
+    box-shadow: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+    margin: 0;
 }
-.cart .item .content{
+.cart .item .bottom{
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 0;
+}
+.cart .item .top .left{
+    width: 150px;
+    height: 150px;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: white;
+}
+.cart .item .top .left img{
+    padding: 0;
+    min-width: 100%;
+    max-width: 100%;
+}
+.cart .item .top .contentCart{
     display: flex;
     flex-direction: column;
     text-transform: capitalize;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin-left: 10px;
 }
-.cart .item span{
+.cart .item .top .contentCart span{
     margin: 5px;
+    text-align: left;
+}
+.cart .item .top .contentCart span.nn{
+    display: flex;
+    flex-direction: column;
+}
+.cart .item .top .contentCart span.nn span{
+    margin: 0 !important;
 }
 
-.cart .item span.attributes{
+
+.cart .item .top .contentCart  span.attributes{
     padding: 0;
     margin: 0 5px;
 }
-.cart .item span.attributes span{
+.cart .item .top .contentCart span.attributes span{
     margin: 1px;
     font-size: 80%;
     color: rgb(255, 136, 0);
 }
-
-.cart .item button{
-    margin: 10px;
-    padding: 5px 10px;
+.cart .item .top .contentCart .itemQty{
+    width: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+.cart .item .top .contentCart .itemQty button{
+    padding: 2px 10px;
+    margin: 0 10px;
+    background: teal !important;
     border-radius: 5px;
+}
+
+.cart .item .top .contentCart .itemQty > div{
+    font-size: 160%;
+    border-radius: 50%;
+    background: teal;
+    color: white;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.cart .item .top .contentCart  .itemQty input{
+    width: 50px;
+    text-align: center;
+    margin: 0 10px;
+    border: 1px solid teal;
+    color: teal;
+    outline: none;
+}
+
+.cart .item .bottom button{
+    padding: 2px 20px;
+    border-radius: 2px;
     text-transform: capitalize;
     color: white;
     background: red;
-    margin-top: auto;
+    margin-left: 10px;
+    font-size: 90%;
 }
 
 /* right checkout */
@@ -156,7 +229,7 @@
 .cart .right .box button.checkoutBtn{
     width: 80%;
     margin: 10px 0;
-    background: blue;
+    background: orange;
     border-radius: 5px;
     padding: 10px;
     color: white;
@@ -164,12 +237,71 @@
     letter-spacing: 5px;
     text-transform: uppercase;
 }
+.cart .right .box button.checkoutBtn.disabled{
+    pointer-events: none;
+    color: grey;
+    background: white;
+    border: 1px solid grey;
+    text-decoration: line-through;
+}
+
 .cart .right .box button.checkoutBtn:hover{
-    background: darkblue;
+    background: rgb(184, 121, 4);
+    transition: .25s;
 }
 
 
+@media screen and (max-width: 650px) {
+    .cart{
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    .cart .left{
+        padding: 0;
+        width: 100%;
+        margin-bottom: 50px;
+    }
+    .cart .item{
+        box-shadow: none;
+        width: 100%;
+        padding: 5px 0px;
+    }
+    .cart .left .item .bottom{
+        padding: 10px;
+        padding-top: 0;
+    }    
+    .cart .left .item .bottom button{
+        background: none !important;
+        color: red !important; 
+        text-decoration: underline;
+        letter-spacing: 1.5px;
+        padding: 0 !important;
+        margin-right: 7px;
+    }
 
+    /* total-checkout-right-etc... */
+    .cart .right{
+        width: 100%;
+    }
+    .cart .right{
+        position: fixed;
+        bottom: 0;
+        z-index: 999999;
+        padding: 0;
+    }
+    .cart .right .box{
+        padding: 0;
+    }
+    .cart .item .contentCart span{
+        text-align: center;
+    }
+    .cart .item .contentCart button:nth-of-type(1){
+        margin-top: 10px;
+    }
+
+
+}
 
 
 

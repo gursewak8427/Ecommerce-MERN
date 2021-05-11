@@ -4,6 +4,7 @@ import axios from 'axios'
 import { authenticate, isAuth } from '../../helpers/auth'
 
 import './VManage.css'
+import { KEYS } from '../keys';
 
 function VManage() {
 
@@ -18,7 +19,7 @@ function VManage() {
 
     useEffect(() => {
         axios
-            .get('http://localhost:8082/api/vendor/product/156/getRawData')
+            .get(`${KEYS.NODE_URL}/api/vendor/product/156/getRawData`)
             .then(result => {
                 if (result.data.myRawData.categories.length > 0) {
                     state.catList = []
@@ -52,7 +53,7 @@ function VManage() {
     }
 
     const saveCatIndex = () => {
-        axios.post(`http://localhost:8082/api/vendor/product/156/setCategoryIndex`, { categories: state.catList })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/setCategoryIndex`, { categories: state.catList })
             .then(result => {
                 state.catList = []
                 state.catList = result.data.myCategories
@@ -67,7 +68,7 @@ function VManage() {
             })
     }
     const saveSubCatIndex = () => {
-        axios.post(`http://localhost:8082/api/vendor/product/156/setSubCategoryIndex`, { subCategories: state.subCatList })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/setSubCategoryIndex`, { subCategories: state.subCatList })
             .then(result => {
                 state.subCatList = []
                 state.subCatList = result.data.mySubCategories
@@ -91,7 +92,7 @@ function VManage() {
             "category": state.myCategory,
             "subCategory": subCat
         }
-        axios.post(`http://localhost:8082/api/vendor/product/156/product/get/categoryAndSubCategory`, data)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/product/get/categoryAndSubCategory`, data)
             .then(result => {
                 state.productList = []
                 state.productList = state.productList.concat(result.data.myProducts)
@@ -102,6 +103,48 @@ function VManage() {
             })
     }
 
+    const changeCatStatus = (status, index) => {
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/setCategoryStatus`, { index, status })
+            .then(result => {
+                state.catList = []
+                state.catList = result.data.myCategories
+                setState({
+                    ...state,
+                    catList: state.catList,
+                });
+            })
+            .catch(err => {
+                console.log(err)
+            })
+    }
+    const changeSubCatStatus = (status, id) => {
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/setSubCategoryStatus`, { id, status })
+            .then(result => {
+                state.subCatList = []
+                state.subCatList = result.data.mySubCategories
+                setState({
+                    ...state,
+                    subCatList: state.subCatList,
+                });
+            })
+            .catch(err => {
+                console.log(err)
+            })
+    }
+    const deleteProduct = (id, index) => {
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteProduct`, { id })
+            .then(result => {
+                let pro = state.productList
+                pro.splice(index, 1)
+                setState({
+                    ...state,
+                    productList: pro
+                })
+            })
+            .catch(err => {
+                console.log(err)
+            })
+    }
 
     return (
         <>
@@ -116,24 +159,42 @@ function VManage() {
                                 <div className="catList box">
                                     <label htmlFor="">Categories</label>
                                     {
-                                        state.catList.map(cat => (
+                                        state.catList.length == 0 ? <span style={{ color: "white", margin: "10px 0" }}>No Category Available</span> : null
+                                    }
+                                    {
+                                        state.catList.map((cat, index) => (
                                             <div key={cat._id} className={`catSubList`}>
                                                 <input type="text" onChange={(e) => { setCatIndex(e, cat._id) }} value={cat.categoryIndex} />
                                                 <span onClick={() => setCat(cat)}>{cat.categoryName}</span>
+                                                {
+                                                    cat.categoryStatus == 1 ?
+                                                        <button className='status deactive' onClick={() => changeCatStatus(0, index)}>Deactive</button> :
+                                                        <button className='status active' onClick={() => changeCatStatus(1, index)}>Active</button>
+                                                }
                                             </div>
                                         ))
                                     }
-                                    <button onClick={saveCatIndex}>Save</button>
+                                    {
+                                        state.catList.length != 0 ? <button onClick={saveCatIndex}>Save</button> : null
+                                    }
                                 </div>
                             ) : state.task == 2 ? (
                                 <div className="catList box">
                                     <label htmlFor="">Sub Categories [ <span>{state?.myCategory?.categoryName}</span> ]</label>
                                     {
-                                        state.subCatList.map(subCat => (
+                                        state.subCatList.length == 0 ? <span style={{ color: "white", margin: "10px 0" }}>No Sub-Category Available</span> : null
+                                    }
+                                    {
+                                        state.subCatList.map((subCat, index) => (
                                             subCat.subCategoryParent == state.myCategory._id ? (
                                                 <div key={subCat._id} className="catSubList">
                                                     <input type="text" onChange={(e) => { setSubCatIndex(e, subCat._id) }} value={subCat.subCategoryIndex} />
                                                     <span onClick={() => setSubCat(subCat)}>{subCat.subCategoryName}</span>
+                                                    {
+                                                        subCat.subCategoryStatus == 1 ?
+                                                            <button className='status deactive' onClick={() => changeSubCatStatus(0, subCat._id)}>Deactive</button> :
+                                                            <button className='status active' onClick={() => changeSubCatStatus(1, subCat._id)}>Active</button>
+                                                    }
                                                 </div>
                                             ) : null
                                         ))
@@ -143,7 +204,10 @@ function VManage() {
                             ) : state.task == 3 ? (
                                 <div className="productList">
                                     {
-                                        state.productList.map(product => (
+                                        state.productList.length == 0 ? <span style={{ color: "white", margin: "10px 0" }}>No Product Available</span> : null
+                                    }
+                                    {
+                                        state.productList.map((product, index) => (
                                             <div className="product" key={product._id}>
                                                 <div className="img">
                                                     {product.CoverImages.length > 0 ? (
@@ -155,7 +219,7 @@ function VManage() {
                                                 <span>{product.productName}</span>
                                                 <div className="details">
                                                     <span><Link to={`/vendor/product/${product._id}`}>Edit</Link></span>
-                                                    <span>Delete</span>
+                                                    <span onClick={() => deleteProduct(product._id, index)}>Delete</span>
                                                 </div>
                                             </div>
                                         ))

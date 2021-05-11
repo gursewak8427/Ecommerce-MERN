@@ -41,26 +41,32 @@ function VSidebar() {
                     </Link>
                     <Link to='/vendor/product' onClick={() => setIndex(2)}>
                         <li className={state.index == 2 ? 'active' : ''}>
-                            <i className="fas fa-home"></i>
+                            <i className="fas fa-sitemap"></i>
                             <span>Product</span>
                         </li>
                     </Link>
                     <Link to='/vendor/attr' onClick={() => setIndex(3)}>
                         <li className={state.index == 3 ? 'active' : ''}>
-                            <i className="fas fa-home"></i>
+                            <i className="fas fa-cubes"></i>
                             <span>Attribute</span>
                         </li>
                     </Link>
                     <Link to='/vendor/manage' onClick={() => setIndex(4)}>
                         <li className={state.index == 4 ? 'active' : ''}>
-                            <i className="fas fa-home"></i>
+                            <i className="fas fa-tasks"></i>
                             <span>Management</span>
                         </li>
                     </Link>
                     <Link to='/vendor/orders' onClick={() => setIndex(5)}>
                         <li className={state.index == 5 ? 'active' : ''}>
-                            <i className="fas fa-home"></i>
+                            <i className="fas fa-shopping-basket"></i>
                             <span>Orders</span>
+                        </li>
+                    </Link>
+                    <Link to='/vendor/general/sliders' onClick={() => setIndex(6)}>
+                        <li className={state.index == 6 ? 'active' : ''}>
+                            <i className="fas fa-tv"></i>
+                            <span>Sliders</span>
                         </li>
                     </Link>
                 </div>

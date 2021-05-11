@@ -1,9 +1,9 @@
 aside{
     width: 100%;
-    min-height: calc(100vh - 70px);
-    max-height: calc(100vh - 70px);
+    min-height: 100vh;
+    max-height: 100vh;
     position: fixed;
-    bottom: 0;
+    top: 0;
     background: transparent;
     left: 0;
     transform: translateX(-100%);
@@ -14,20 +14,43 @@ aside{
 }
 aside .data{
     overflow: auto;
-    width: 70%;
+    width: 30%;
     max-width: 350px;
     background: white;
-    min-height: calc(100vh - 70px);
-    max-height: calc(100vh - 70px);
+    min-height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: 20px;
 }
 aside.open .data{
     box-shadow: 0px 20px 15px 1px grey;
 }
+aside .data.a li{
+    width: 85%;
+    margin: 5px 0;
+    font-size: 110%;
+    list-style: none;
+    padding: 5px 20px;
+    background: rgb(221, 219, 219);
+    border: 1px solid grey;
+    border-left: none;
+    border-radius: 0 15px 15px 0;
+    font-weight: bolder;
+    font-size: 95%;
+}
+aside .data.a li .navName{
+    color: black;
+    font-size: 130%;
+}
 aside .clickAble{
-    width: 30%;
-    background: transparet;
-    min-height: calc(100vh - 70px);
-    max-height: calc(100vh - 70px);
+    width: 70%;
+    min-height: 100vh !important;
+    background: transparent;
+    min-height: 100vh;
+    max-height: 100vh;
 }
 aside.open{
     transition: .5s;
@@ -40,6 +63,12 @@ aside.open{
     align-items: center;
     justify-content: flex-start;
 }
+#sideMenu .data h4{
+    font-weight: bolder;
+    color: orange;
+    margin-bottom: 20px;
+}
+
 #sideMenu .data .list{
     width: 100%;
     height: auto;
@@ -51,11 +80,15 @@ aside.open{
     width: 100%;
     margin: 0;
     padding: 10px;
-    border-bottom: 1px solid black;
-    background: whitesmoke;
+    border-bottom: 2px solid rgb(253, 194, 0);
+    background: rgb(236, 182, 5, 0.33);
     cursor: pointer;
     text-transform: capitalize;
 }
+#sideMenu .data .list label:hover{
+    background: rgb(236, 182, 5, 0.45);
+}
+
 #sideMenu .data .list > ul{
     width: 100%;
     padding: 0;
@@ -63,32 +96,40 @@ aside.open{
     display: none;
 }
 #sideMenu .data .list.open label{
-    background: darkgrey;
+    background: orange;
+    color: white;
+    font-weight: bolder;
+    transition: .5s;
 }
 #sideMenu .data .list.open ul{
     display: block;
 }
-#sideMenu .data .list ul li{
+#sideMenu .data .list ul li {
     width: 100%;
     padding: 10px;
+    font-size: 84%;
     text-transform: capitalize;
+    color: orange;
+}
+#sideMenu .data .list ul li:hover{
+    color: orange;
 }
 #sideMenu .data .list ul li:hover{
     background: whitesmoke;
     cursor: pointer;
 }
-
-
-
-
-
-@media screen and (min-width: 650px){
-    aside#sideMenu{
-        min-height: 100vh;
-        max-height: 100vh;
+/* for mobile */
+@media screen and (max-width: 650px){
+    aside .data{
+        width: 70% !important;
     }
-    aside#sideMenu .data{
-        min-height: 100vh;
-        max-height: 100vh;
+    aside .clickAble{
+        width: 30% !important;
+    }
+        
+}
+@media screen and (min-width: 650px){
+    aside#sideBar{
+        display: none !important;
     }
 }

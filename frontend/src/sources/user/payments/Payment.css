@@ -35,10 +35,10 @@
 }
 
 .addressContainer .right button{
-    width: 80%;
-    padding: 10px 20px;
-    border-radius: 20px;
-    margin: 20px 0;
+    min-width: 80%;
+    padding: 7px 20px;
+    border-radius: 10px;
+    margin: 5px 0;
     background: #09c28a;
     transition: .25s;
     border: 2px solid transparent;
@@ -53,3 +53,21 @@
     transition: .25s;
 }
 
+/* for mobile */
+@media screen and (max-width: 650px) {
+    .addressContainer{
+        min-height: 100vh;
+    }
+    .addressContainer h3{
+        font-size: 90%;
+    }
+    .addressContainer .right{
+        width: 100%;
+    }
+    .addressContainer .location-box-cover input{
+        margin-bottom: 15px;
+    }
+    .addressContainer .right button{
+        margin-bottom: 10px;
+    }
+}

@@ -4,6 +4,18 @@
     width: 100%;
     margin: 0 auto;
     padding: 0;
+    position: relative;
+}
+.loginFirst{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+.loginFirst span{
+    font-weight: bolder;
+    color: orange;
+    letter-spacing: 1.5px;
 }
 .wrapper > .swiper-container{
     width: 100%;
@@ -19,12 +31,15 @@
     z-index: 15;
     /* mask-image: linear-gradient(rgba(0, 0, 0, 1), transparent); */
 }
-
 .wrapper > .swiper-container .swiper-slide img{
     max-width: 100%;
     min-width: 100%;
     height: auto;
 }
+.wrapper > .swiper-container .swiper-slide img.mob{
+    display: none;
+}
+
 
 .wrapper > .swiper-container .overlay{
     position: absolute;
@@ -34,11 +49,11 @@
     height: 370px;
     background: whitesmoke;
     mask-image: linear-gradient(transparent, rgba(0, 0, 0, 1.0));
-    /* background: linear-gradient(rgba(255, 255, 255, 0.3),
+    background: linear-gradient(rgba(255, 255, 255, -0.7),
                                 rgba(255, 255, 255, 0.4),
                                 rgba(255, 255, 255, 0.8),
-                                rgba(255, 255, 255, 0.9),
-                                 whitesmoke); */
+                                rgba(255, 255, 255, 1.9),
+                                whitesmoke);
     z-index: 16;
 }
 .swiper-button-prev{
@@ -47,8 +62,6 @@
 .swiper-button-next{
     color: black !important;
 }
-
-
 .wrapper .content{
     position: relative;
     max-width: 100%;
@@ -61,14 +74,12 @@
     transform: translateY(-370px);
 }
 .content .row{
-    padding: 0 1% 20px;
     width: 98%;
     height: auto;
     display: flex;
     flex-direction: row;
     align-items: stretch;
     justify-content: flex-start;
-    padding: 10px;
 }
 .content .row .box-1{
     width: calc(25% - 10px);
@@ -77,6 +88,7 @@
     display: flex;
     flex-direction: column;
     margin: 5px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 .content .row .box-1 label{
     padding: 3px;
@@ -120,7 +132,7 @@
     background: yellow;
 }
 .row-slider{
-    width: 98%;
+    width: calc(98% - 5px);
     height: auto;
     background: white;
     display: flex;
@@ -132,16 +144,16 @@
     margin: 5px 0;
 }
 .row-slider .header{
-    width: 95%;
+    width: 100%;
     height: auto;
-    padding: 10px 0 0;
+    padding: 5px 15px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
 }
 .row-slider .header .label{
-    width: 95%;
+    width: auto;
     height: auto;
     font-size: 120%;
     text-align: left;
@@ -156,16 +168,13 @@
     color: black;
     text-decoration: underline;
 }
-
-
-
 .row-slider .items{
     width: 100%;
     height: auto;
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    justify-content: flex-start;
+    justify-content: space-between;
     flex-wrap: wrap;
     padding: 0 10px;
 }
@@ -179,6 +188,10 @@
     position: relative;
     overflow: hidden;
     border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
 }
 .row-slider .items .item .top{
     width: 100%;
@@ -188,6 +201,10 @@
     align-items: center;
     justify-content: flex-end;
     padding: 0 10px;
+    z-index: inherit !important;
+}
+.moreVarBtn{
+    display: none;
 }
 .row-slider .items .item .top .wishBtn{
     width: auto;
@@ -206,7 +223,7 @@
 
 .row-slider .items .item img{
     width: 100%;
-    height: 230px;
+    height: auto;
 }
 .row-slider .items .item .name{
     width: 100%;
@@ -354,18 +371,13 @@
 .row-slider .items .item .details .btns button{
     padding: 5px;
     padding-top: 7px;
-    width: 50%;
+    width: 100%;
     background: whitesmoke;
     font-size: 95%;
 }
 .row-slider .items .item .details .btns button:hover{
     background: rgba(128, 128, 128, 0.582);
 }
-
-
-
-
-
 @media screen and (min-width: 650px) {
     .swiper-button-next,
         .swiper-button-prev{
@@ -373,14 +385,75 @@
         height: 50% !important;
     }
 }
+/*  for mobile  */
 @media screen and (max-width: 650px) {
+    .wrapper{
+        padding-top: 70px;
+    }
+    .swiper-button-next,
+        .swiper-button-prev{
+        visibility: hidden;
+        /* top: 60px !important;
+        height: 50% !important; */
+    }
     .wrapper > .swiper-container .swiper-slide{
-        height: 200px;
+        height: 150px;
     }
-    .content{
-        transform: translateY(0px);
+    .wrapper > .swiper-container .swiper-slide img{
+        width: 100%;
+        height: 100%;
     }
-    .overlay{
+    .wrapper .content{
+        transform: translateY(0);
+    }
+    .wrapper > .swiper-container .overlay{
+        display: none;
+    }
+    
+    .content .row{
+        display: flex;
+        flex-direction: column;
+    }
+    .content .row .box-1{
+        width: calc(100% - 10px);
+    }
+
+    .row-slider .items .item{
+        border-radius: 0;
+        margin: 10px 5px;
+        min-width: calc(50% - 10px);
+        max-width: calc(50% - 10px);
+    }
+    .row-slider .items .item .details{
+        font-size: 79%;
+    }
+    .row-slider .items .item:hover{
+        box-shadow: none;
+    }
+
+
+    /*  item detail for mobile.. like varient and price... */
+    .row-slider .items .item .topDetails{
+        display: none;
+    }
+    .row-slider .items .item .details{
+        position: relative;
+        transform: translateY(0%);
+        border-radius: 0;
+        background: grey;
+    }
+    .row-slider .items .item .details .btns{
+        display: none;
+    }
+
+    /* slider image change */
+    .wrapper > .swiper-container .swiper-slide img.pc{
+        display: none;
+    }
+    .wrapper > .swiper-container .swiper-slide img.mob{
+        display: block;
+    }
+    .row-slider .items .item .details .pricing span.off{
         display: none;
     }
 }

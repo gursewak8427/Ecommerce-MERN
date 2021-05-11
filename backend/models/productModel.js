@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const ProductSchema = new mongoose.Schema({
-    _id: {
-        type: String,
-    },
+    // _id: {
+    //     type: String,
+    // },
     productName: {
         type: String,
     },
@@ -31,9 +31,14 @@ const ProductSchema = new mongoose.Schema({
     productStatus: {
         type: String,
     },
+    productOverallMinPrice: Number,
+    productOverallMaxPrice: Number,
     productPricing: {
-        price : String,
-        mrp: String
+        price: Number,
+        mrp: Number
+    },
+    itemQty: {
+        type: Number,
     },
     CoverImages: [String],
     productType: {
@@ -41,7 +46,6 @@ const ProductSchema = new mongoose.Schema({
         default: 0
     },
     productVarients: [{
-        _id: String,
         varienteAttributes: [
             {
                 attr_id: String,
@@ -50,9 +54,19 @@ const ProductSchema = new mongoose.Schema({
         ],
         general: {
             images: [String],
-            price: String
-        }
+            price: Number,
+            mrp: Number,
+            itemQty: {
+                type: Number,
+                default: 0
+            },
+        },
+        varDtl: [[String, String]]
     }],
+    simpleDtl: [[String, String]]
 });
+
+
+ProductSchema.index({ productName: "text/i" });
 
 module.exports = Product = mongoose.model('product', ProductSchema);

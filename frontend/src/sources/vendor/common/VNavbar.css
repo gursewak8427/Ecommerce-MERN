@@ -49,7 +49,8 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: pink;
+    background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSXqCTNg8NsLfXWwiZ4oKej4HSuu3mimkYKHgDKAEYAZdmlVfB0M22Iry6EqPxM6AmDuE&usqp=CAU');
+    background-size: 100%;
     text-align: center;
     line-height: 50px;
     position: relative;

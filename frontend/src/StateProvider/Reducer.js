@@ -8,12 +8,27 @@ export const initialState = {
     attributes: [],
     orders: [],
     vendorOrders: [],
-    currentOrder: []
+    currentOrder: [],
+    sliderList: [],
+    searchItem: '',
+    loading: false,
 };
 
 const reducer = (store, action) => {
     // console.log(action)
     switch (action.type) {
+        case 'SET_LOADING':
+            return {
+                ...store,
+                loading: true
+            }
+
+        case 'UNSET_LOADING':
+            return {
+                ...store,
+                loading: false
+            }
+
         case 'LOGIN_USER':
             return {
                 ...store,
@@ -23,10 +38,10 @@ const reducer = (store, action) => {
         case 'ADD_TO_CART':
             {
                 var price = 0
-                if (action.item.item.productType == 0) {
-                    price = store.cartTotal + parseInt(action.item.item.price.price)
-                } else if (action.item.item.productType == 1) {
-                    price = store.cartTotal + parseInt(action.item.item.varient.general.price)
+                if (action.item.productType == 0) {
+                    price = store.cartTotal + parseInt(action.item.price.price)
+                } else if (action.item.productType == 1) {
+                    price = store.cartTotal + parseInt(action.item.varient.general.price)
                 }
                 return {
                     ...store,
@@ -73,6 +88,18 @@ const reducer = (store, action) => {
             return {
                 ...store,
                 orders: action.orders
+            }
+
+        case 'SET_SEARCH_ITEM':
+            return {
+                ...store,
+                searchItem: action.item
+            }
+
+        case 'SET_SLIDERS':
+            return {
+                ...store,
+                sliderList: action.sliders
             }
 
         case 'SET_CURRENT_ORDER':

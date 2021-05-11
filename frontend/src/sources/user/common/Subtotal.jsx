@@ -8,43 +8,31 @@ const Subtotal = props => {
     const [store, dispatch] = useStateValue();
 
     const continueToOrder = () => {
+        document.getElementById('chkBtn').disabled = true
         const randomString = Math.random().toString(36).substring(2, 12);
         var nowTiming = new Date();
+        let CorrectTime =
+            nowTiming.toLocaleString("en-US", {
+                timeZone: "Asia/Kolkata"
+            });
         // 1 = COD, 2 = UPI
-        var paymentType = 1
-        var payment
-        if (paymentType == 1) {
-            payment = {
-                paymentType: 1,
-                paymentDetail: 'abc'
-            }
-        }
-        if (paymentType == 2) {
-            payment = {
-                paymentType: 2,
-                paymentDetail: {
-                    TransitionId: 'abcdefghij'
-                }
-            }
-        }
         let order = {
             // order-id = userId + numberOfOrders + randomString
             orderId: store.orders.length + store.user.id + randomString,
             items: store.cart,
             orderStatus: 1,
-            orderPayment: payment,
-            orderTime: nowTiming.toUTCString(),
+            orderAmount: store.cartTotal,
+            orderPayment: undefined,
+            orderTime: CorrectTime,
             orderAddress: []
         }
 
         // Set Current Order
         dispatch({ type: 'SET_CURRENT_ORDER', order: [order] })
+        document.getElementById('chkBtn').disabled = false
+        history.push(`payment/${order.orderId}`);
 
-        if(store.currentOrder.length == 1){
-            history.push(`payment/${order.orderId}`);
-        }
 
-        
     }
 
     return (
@@ -52,7 +40,7 @@ const Subtotal = props => {
             <div className="total">
                 Subtotal: ({store.cart.length} items) <span>{store.cartTotal} Rs</span>
             </div>
-            <button className='checkoutBtn' onClick={continueToOrder}>Continue</button>
+            <button id='chkBtn' className={`checkoutBtn ${store.cartTotal == 0 ? 'disabled' : ''}`} onClick={continueToOrder}>Continue</button>
         </div>
     )
 }

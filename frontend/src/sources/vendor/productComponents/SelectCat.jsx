@@ -4,6 +4,7 @@ import axios from 'axios'
 import ImageUploader from 'react-images-upload'
 
 import './SelectCat.css'
+import { KEYS } from '../../keys';
 
 const SelectCat = ({ stateChanger, ...rest }) => {
     const [state, setState] = useState({
@@ -15,7 +16,7 @@ const SelectCat = ({ stateChanger, ...rest }) => {
         newCategoryName: '',
     })
     useEffect(() => {
-        axios.get(`http://localhost:8082/api/vendor/product/156/getCategories`)
+        axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getCategories`)
             .then(result => {
                 state.catList = []
                 result.data.myCategories.map(cat => {
@@ -113,7 +114,7 @@ const SelectCat = ({ stateChanger, ...rest }) => {
                     "newCategoryName": state.newCategoryName,
                     "images": state.picUrls,
                 }
-                axios.post(`http://localhost:8082/api/vendor/product/156/insertCategory`, data)
+                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertCategory`, data)
                     .then(result => {
                         document.getElementsByClassName('addCat')[0].classList.toggle('show')
                         document.getElementsByClassName('add_new')[0].classList.toggle('open')
@@ -177,6 +178,9 @@ const SelectCat = ({ stateChanger, ...rest }) => {
             </div>
             <div className="form-area">
                 <div className="select">
+                    {
+                        state.catList.length == 0 ? <span style={{ color: "white", margin: "10px 0" }}>No Category Available, create New Category now from plus(+) sign bottom</span> : null
+                    }
                     {
                         state.catList.map((data, index) => (
                             <div key={index} className={`option ${index}`}>

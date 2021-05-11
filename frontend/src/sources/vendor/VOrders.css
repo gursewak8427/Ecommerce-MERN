@@ -4,6 +4,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+    margin-bottom: 30px;
 }
 .vorders .order{
     width: 98%;
@@ -56,21 +57,32 @@
     align-items: flex-start;
     justify-content: flex-start;
     flex-wrap: wrap;
+    padding: 20px 0;
 }
 
 .vorders .order .details .items .item{
     margin: 5px;
-    min-width: 140px;
-    max-width: 140px;
+    min-width: 230px;
+    max-width: 230px;
     cursor: pointer;
+}
+.vorders .order .details .items .item:hover{
+    box-shadow: none;
 }
 .vorders .order .details .items .item img{
     width: 100%;
-    height: 150px;
+    min-height: 240px;
+    max-height: 240px;
 }
 .vorders .order .details .items .item span{
     font-size: 80%;
     margin: 2px;
+}
+.vorders .order .details .items .item .content{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 

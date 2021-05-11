@@ -5,6 +5,7 @@ import { authenticate, isAuth } from '../../../helpers/auth'
 import ImageUploader from 'react-images-upload'
 
 import './SelectSubCat.css'
+import { KEYS } from '../../keys';
 
 const SelectSubCat = ({ stateChanger, cat, ...rest }) => {
     const [state, setState] = useState({
@@ -17,7 +18,7 @@ const SelectSubCat = ({ stateChanger, cat, ...rest }) => {
         subCatList: []
     })
     useEffect(() => {
-        axios.get(`http://localhost:8082/api/vendor/product/156/getSubCategories?parent=${cat[0]}`)
+        axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getSubCategories?parent=${cat[0]}`)
             .then(result => {
                 state.subCatList = []
                 result.data.mySubCategories.map(subCat => {
@@ -51,17 +52,13 @@ const SelectSubCat = ({ stateChanger, cat, ...rest }) => {
         setState({ ...state, [e.target.name]: e.target.value });
     }
     const onChange = (e, id) => {
-
         state.subCatList.map(subCat => subCat.subCatId == e.target.value ? setState({ ...state, [e.target.name]: e.target.value, selectedSubCategoryName: subCat.subCatName }) : null)
-
         let i = 0
         while (i < state.subCatList.length) {
             i == id ? document.getElementById(`subCat_label_${i}`).classList.add('selected') : document.getElementById(`subCat_label_${i}`).classList.remove('selected')
             i += 1
         }
-
     }
-
     const onSubmit = (e) => {
         if (state.selectedSubCategory == undefined) {
             alert('please select any one sub category to furthure pursued...')
@@ -114,7 +111,7 @@ const SelectSubCat = ({ stateChanger, cat, ...rest }) => {
                     "parent": cat[0],
                     "images": state.picUrls,
                 }
-                axios.post(`http://localhost:8082/api/vendor/product/156/insertSubCategory`, data)
+                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertSubCategory`, data)
                     .then(result => {
                         document.getElementsByClassName('addCat')[0].classList.toggle('show')
                         document.getElementsByClassName('add_new')[0].classList.toggle('open')
@@ -163,7 +160,7 @@ const SelectSubCat = ({ stateChanger, cat, ...rest }) => {
                 <div className="form-area">
                     <label htmlFor="">Sub Category Name</label>
                     <input type="text" placeholder={`Type...`} value={state.newSubCategoryName} name="newSubCategoryName" onChange={onInputChange} />
-                </div>
+                </div> 
                 <div className="form-area">
                     <ImageUploader
                         withPreview={true}

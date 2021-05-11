@@ -2,11 +2,11 @@
     .login{
     background: rgb(255, 255, 255);
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%) scale(0);
-    z-index: 999;
-    width: 50%;
+    top: 0;
+    left: 0;
+    transform: scale(0);
+    z-index: 99999999;
+    width: 40%;
     height: 70vh;
     display: flex;
     flex-direction: column;
@@ -18,15 +18,18 @@
     overflow: hidden;
     border: 3px solid whitesmoke;
     box-shadow: 0px 0px 50px 5px black;
+    overflow: auto;
 }
 .signup.open,
 .login.open{
     transition: .4s;
-    transform: translate(-50%,-50%) scale(1);
+    transform: scale(1);
 }
+
 label.main{
     font-size: 150%;
     margin-bottom: 20px;
+    margin-top: 30px;
 }
 label.main > b{
     color: orange;
@@ -39,9 +42,14 @@ span.main{
     width: 80%;
     text-align: right;
 }
+span.main.ll{
+    margin-top: 10px;
+}
 span.main > span{
-    color: blue;
+    color: teal;
     cursor: pointer;
+    font-weight: bolder;
+    letter-spacing: 1px;
 }
 .crose{
     position: absolute;
@@ -133,13 +141,14 @@ span.main > span{
 }
 .login #codeFieldForgot > label > span > span,
 .signup #codeField label > span > span{
-    color: blue;
+    color: teal;
+    font-weight: bolder;
+    letter-spacing: 1.5px;
+    text-transform: capitalize;
     cursor: pointer;
 }
-
-
 .signup #numberField.closeField{
-    transform: translateX(-100%);
+    transform: translateX(-120%);
     transition: .5s;
 } 
 .signup #codeField.openField{
@@ -154,8 +163,6 @@ span.main > span{
     transform: translateX(0) scale(1);
     transition: .5s;
 }
-
-
 .form-field{
     width: 80%;
     height: auto;
@@ -165,16 +172,25 @@ span.main > span{
     align-items: flex-end;
     justify-content: center;
 }
+.form-field .ff{
+    color: teal;
+    text-transform: capitalize;
+    margin: 10px 0;
+    cursor: pointer;
+    font-weight: bolder;
+    letter-spacing: 1px;
+}
 .form-field label{
     width: 100%;
     text-align: left;
     color: black;
-    padding-left: 2.5%;
+    font-weight: bolder;
+    letter-spacing: 1px;
 }
 
 .form-field input{
     align-self: center;
-    width: 95%;
+    width: 100%;
     transition: .25s;
     padding: 10px;
     background: none;
@@ -189,8 +205,8 @@ span.main > span{
     color: white;
 }
 .form-field input:focus{
-    width: 100%;
-    outline-color: grey;
+    width: 105%;
+    outline-color: rgba(255, 166, 0, 0.562);
 }
 
 .form-field button{
@@ -215,5 +231,8 @@ span.main > span{
     .login{
         width: 100%;
         height: 100vh;
+    }
+    .form-field{
+        width: 90%;
     }
 }

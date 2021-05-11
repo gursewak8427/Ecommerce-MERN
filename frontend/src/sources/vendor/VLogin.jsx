@@ -4,6 +4,7 @@ import axios from 'axios'
 import { authenticate, isAuth } from '../../helpers/auth'
 
 import './VLogin.css'
+import { KEYS } from '../keys';
 
 function VLogin(props) {
     const [formState, setFormState] = useState({
@@ -20,7 +21,7 @@ function VLogin(props) {
             password: formState.password
         };
         axios
-        .post('http://localhost:8082/api/vendor/156/signin', data)
+        .post(`${KEYS.NODE_URL}/api/vendor/156/signin`, data)
         .then(result => {
             authenticate(result, () => {
                 setFormState({ 

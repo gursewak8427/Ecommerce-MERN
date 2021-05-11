@@ -1,128 +1,226 @@
-import React, { useEffect, useState } from 'react';
-import { Redirect, Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
+import { Redirect, Link, useHistory } from 'react-router-dom'
 import { authenticateUser, isAuthUser } from '../../helpers/auth'
 import { useStateValue } from '../../StateProvider/StateProvider';
 import axios from 'axios'
 import './Orders.css'
+import { KEYS } from '../keys'
 
-function Orders() {
+const Orders = () => {
+    let history = useHistory();
     const [store, dispatch] = useStateValue();
-
     const [myOrder, setMyOrder] = useState([])
 
     useEffect(() => {
+        window.scroll(0,0)
+        dispatch({
+            type: 'SET_LOADING'
+        })
         var user = isAuthUser()
         if (user) {
             dispatch({
                 type: 'LOGIN_USER',
                 data: user
             })
-            axios.post(`http://localhost:8082/api/user/order/156/get`, { userId: user.id })
-                .then(result => {
-                    dispatch({
-                        type: 'SET_ORDERS',
-                        orders: result.data.orders
-                    })
+            axios.post(`${KEYS.NODE_URL}/api/user/order/156/get`, { userId: user.id }).then(result => {
+                dispatch({
+                    type: 'SET_ORDERS',
+                    orders: result.data.orders
                 })
-                .catch(err => {
-                    console.log(err)
-                })
+            }).catch(err => console.log(err))
         } else {
             document.getElementById('signup').classList.add('open')
+            dispatch({
+                type: 'UNSET_LOADING'
+            })
         }
+
+        if (store.rawdata.length == 0) {
+            axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getRawData`)
+                .then(result => {
+                    sorting(result.data.myRawData.categories, result.data.myRawData.subCategories)
+                }).catch(err => console.log(err))
+        }else{
+            dispatch({
+                type: 'UNSET_LOADING'
+            })
+        }
+
     }, [])
+
+
+    function sorting(catList, subCatList) {
+        for (let j = 0; j < catList.length; j += 1) {
+            for (let i = 0; i < catList.length - j; i += 1) {
+                if (catList[i + 1]) {
+                    if (catList[i].categoryIndex > catList[i + 1].categoryIndex) { swapingCat(i, i + 1) }
+                }
+            }
+        }
+        function swapingCat(a, b) {
+            let Temp = catList[a]
+            catList[a] = catList[b]
+            catList[b] = Temp
+        }
+        for (let j = 0; j < subCatList.length; j += 1) {
+            for (let i = 0; i < subCatList.length - j; i += 1) {
+                if (subCatList[i + 1]) {
+                    if (subCatList[i].subCategoryIndex > subCatList[i + 1].subCategoryIndex) { swapingSubCat(i, i + 1) }
+                }
+            }
+        }
+        function swapingSubCat(a, b) {
+            let Temp = subCatList[a]
+            subCatList[a] = subCatList[b]
+            subCatList[b] = Temp
+        }
+        dispatch({
+            type: 'ADD_TO_RAWDATA',
+            data: {
+                categories: catList,
+                subCategories: subCatList
+            }
+        })
+        dispatch({
+            type: 'UNSET_LOADING'
+        })
+    }
 
     const seeDetail = (index, orderId) => {
         // setting hover/clicked effect
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let d = document.getElementsByClassName('order')
-        for(let i = 0; i < d.length; i++){
+        for (let i = 0; i < d.length; i++) {
             d[i].classList.remove('active')
         }
         document.getElementsByClassName(`ordr${orderId}`)[0].classList.add('active')
-
+        document.getElementsByClassName('orderDetail')[0].classList.add('openDtl')
         if (store.orders[index].orderId == orderId) {
             setMyOrder([index, orderId])
+            dispatch({
+                type: 'UNSET_LOADING'
+            })
         }
+    }
+    const closeDtl = () => {
+        let d = document.getElementsByClassName('order')
+        for (let i = 0; i < d.length; i++) {
+            d[i].classList.remove('active')
+        }
+        document.getElementsByClassName('orderDetail')[0].classList.remove('openDtl')
+        setMyOrder([])
+    }
+    const goToProduct = id => {
+        history.push(`/item/info/${id}`);
     }
 
     return (
         <>
-            <div className="orders">
-                <div className="left list">
+            <div className="wrapper">
+                <div className="orders">
                     {
-                        store.orders.length == 0 ? (
-                            <div className="emptyOrder">
-                                <img src="https://m.media-amazon.com/images/G/31/cart/empty/kettle-desaturated._CB424694257_.svg" alt="" />
-                                <div className="data">
-                                    <span className='a'>Your Haven't any order</span>
-                                    <Link to='td'><span className='b'>shop today's deals</span></Link>
-                                </div>
+                        !isAuthUser() ?
+                            <div className="loginFirst">
+                                <img src="https://borlabs.io/wp-content/uploads/2019/09/blog-wp-login.png" alt="" />
+                                <span className='a'>Please Signin/ Signup</span>
                             </div>
-                        ) : (
-                            store.orders.map((order, index) => (
-                                <div key={index} className={`order ordr${order.orderId}`}>
-                                    <div className="top">
-                                        <span>{order.orderTime}</span>
-                                        <span className='status' onClick={() => seeDetail(index, order.orderId)}>{
-                                            order.orderStatus == 1 ? <span className="a">Pending</span> :
-                                                order.orderStatus == 2 ? <span className="b">Processing</span> :
-                                                    order.orderStatus == 3 ? <span className="c">Shipping</span> :
-                                                        order.orderStatus == 4 ? <span className="d">Delivered</span> : null
-                                        }</span>
-                                    </div>
-                                    <div className="items">
-                                        {order.items.map(item => (
-                                            item.productType == 0 ? (
-                                                <div key={item.id} className="item">
-                                                    <img src={item.coverImg} alt="" />
-                                                    <div className="content">
-                                                        <span>{item.name}</span>
-                                                        <span>Price: {item.price.price} ₹</span>
-                                                    </div>
-                                                </div>
-                                            ) : item.productType == 1 ? (
-                                                <div key={item.id} className="item">
-                                                    <img src={item.varient.general.images.length != 0 ? item.varient.general.images[0] : item.coverImg} alt="" />
-                                                    <div className="content">
-                                                        <span className='name'>{item.name}
-                                                            <span className='attributes'>{item.varient.varienteAttributes.map((atr, index) => index == 0 && index + 1 == item.varient.varienteAttributes.length ? (<span key={index}>({atr.value})</span>) : index == 0 ? (<span key={index}>({atr.value},</span>) : index + 1 == item.varient.varienteAttributes.length ? (<span key={index}>{atr.value})</span>) : (<span key={index}>{atr.value},</span>))} </span>
-                                                        </span>
-                                                        <span>Price: {item.varient.general.price} ₹</span>
-                                                    </div>
-                                                </div>
-                                            ) : null
-                                        ))}
-                                    </div>
-                                </div>
-                            ))
-                        )
-                    }
-                </div>
-                <div className="right orderDetail">
-                    <div className="box">
-                        {
-                            myOrder.length == 0 ? (
-                                'Here is your order detail'
-                            ) : (
+                            : (
                                 <>
-                                    {store.orders[myOrder[0]].orderId == myOrder[1] ? (
-                                        <>  
-                                            <span>Order Id: <span>{store.orders[myOrder[0]].orderId}</span></span>
-                                            <div className="content">
-                                            <div className={`line ${store.orders[myOrder[0]].orderStatus == 1 ? 'one' : store.orders[myOrder[0]].orderStatus == 2 ? 'two' : store.orders[myOrder[0]].orderStatus == 3 ? 'three' : store.orders[myOrder[0]].orderStatus == 4 ? 'four' : '' }`}><span></span></div>
-                                            <div className="data">
-                                                <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 1 ? 'active-1 now' : ''}`}>Ordered</li>
-                                                <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 2 ? 'active-2 now' : ''}`}>Processing</li>
-                                                <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 3 ? 'active-3 now' : ''}`}>Shiping</li>
-                                                <li className={`${store.orders[myOrder[0]].orderStatus >= 4 ? 'active-4 now' : ''}`}>Delivered</li>
-                                            </div>
-                                            </div>
-                                        </>
-                                    ) : null}
+                                    <div className="left list">
+                                        {
+                                            store.orders.length == 0 ? (
+                                                <div className="emptyOrder">
+                                                    <img src="https://m.media-amazon.com/images/G/31/cart/empty/kettle-desaturated._CB424694257_.svg" alt="" />
+                                                    <div className="data">
+                                                        <span className='a'>Your Haven't any order</span>
+                                                        <Link to='td'><span className='b'>shop today's deals</span></Link>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                store.orders.map((order, index) => (
+                                                    <div key={index} className={`order ordr${order.orderId}`}>
+                                                        <div className="top">
+                                                            <span>{order.orderTime}</span>
+                                                            <span className='status' onClick={() => seeDetail(index, order.orderId)}>{
+                                                                order.orderStatus == 1 ? <span className="a">Pending</span> :
+                                                                    order.orderStatus == 2 ? <span className="b">Processing</span> :
+                                                                        order.orderStatus == 3 ? <span className="c">Shipping</span> :
+                                                                            order.orderStatus == 4 ? <span className="d">Delivered</span> :
+                                                                                order.orderStatus == 5 ? <span className="e">Canceled</span> : null
+                                                            }</span>
+                                                        </div>
+                                                        <div className="items">
+                                                            {order.items.map((item, itemIndex) => (
+                                                                item.productType == 0 ? (
+                                                                    <div key={order.orderId + item.id + itemIndex} onClick={() => goToProduct(item.id)} className="item">
+                                                                        <div className="left">
+                                                                            <img src={item.coverImg} alt="" />
+                                                                        </div>
+                                                                        <div className="contentF">
+                                                                            <span className='name'>{item.name}</span>
+                                                                            <span>Price: {item.price.price} ₹</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : item.productType == 1 ? (
+                                                                    <div key={order.orderId + item.id + itemIndex} onClick={() => goToProduct(item.id)} className="item">
+                                                                        <div className="left">
+                                                                            <img src={item.varient.general.images.length != 0 ? item.varient.general.images[0] : item.coverImg} alt="" />
+                                                                        </div>
+                                                                        <div className="contentF">
+                                                                            <span className='name'>{item.name}
+                                                                                <span className='attributes'>{item.varient.varienteAttributes.map((atr, index) => index == 0 && index + 1 == item.varient.varienteAttributes.length ? (<span key={order.orderId + itemIndex + atr.attr_id}>({atr.value})</span>) : index == 0 ? (<span key={order.orderId + itemIndex + atr.attr_id}>({atr.value},</span>) : index + 1 == item.varient.varienteAttributes.length ? (<span key={order.orderId + itemIndex + atr.attr_id}>{atr.value})</span>) : (<span key={order.orderId + itemIndex + atr.attr_id}>{atr.value},</span>))} </span>
+                                                                            </span>
+                                                                            <span>Price: {item.varient.general.price} ₹</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : null
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )
+                                        }
+                                    </div>
+                                    <div className="right orderDetail">
+                                        <div className="crose d" onClick={closeDtl}>X</div>
+                                        <div className="box">
+                                            {
+                                                myOrder.length == 0 ? (
+                                                    'Here is your order detail'
+                                                ) : (
+                                                    <>
+                                                        {
+                                                            store.orders[myOrder[0]].orderId == myOrder[1] && store.orders[myOrder[0]].orderStatus != 5 ? (
+                                                                <>
+                                                                    <span style={{ marginBottom: 0 }}>Order Id:</span>
+                                                                    <span><span>{store.orders[myOrder[0]].orderId}</span></span>
+                                                                    <div className="contentd">
+                                                                        <div className={`line ${store.orders[myOrder[0]].orderStatus == 1 ? 'one' : store.orders[myOrder[0]].orderStatus == 2 ? 'two' : store.orders[myOrder[0]].orderStatus == 3 ? 'three' : store.orders[myOrder[0]].orderStatus == 4 ? 'four' : ''}`}><span></span></div>
+                                                                        <div className="data">
+                                                                            <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 1 ? 'active-1 now' : ''}`}>Ordered</li>
+                                                                            <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 2 ? 'active-2 now' : ''}`}>Processing</li>
+                                                                            <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 3 ? 'active-3 now' : ''}`}>Shiping</li>
+                                                                            <li className={`${store.orders[myOrder[0]].orderStatus >= 4 ? 'active-4 now' : ''}`}>Delivered</li>
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+                                                            ) :
+                                                                store.orders[myOrder[0]].orderStatus == 5 ? (
+                                                                    <h4>Your order is canceled.</h4>
+                                                                ) : null
+                                                        }
+
+                                                    </>
+                                                )
+                                            }
+                                        </div>
+                                    </div>
                                 </>
                             )
-                        }
-                    </div>
+                    }
+
                 </div>
             </div>
         </>

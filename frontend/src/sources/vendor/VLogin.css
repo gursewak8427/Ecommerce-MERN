@@ -9,6 +9,7 @@
     align-items: center;
     justify-content: center;
     background: whitesmoke;
+    z-index: 99999;
 }
 
 .v-login .form{

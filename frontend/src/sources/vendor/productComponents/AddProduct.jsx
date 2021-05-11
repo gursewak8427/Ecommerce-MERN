@@ -4,6 +4,7 @@ import axios from 'axios'
 import { authenticate, isAuth } from '../../../helpers/auth'
 
 import './AddProduct.css'
+import { KEYS } from '../../keys';
 
 function AddProduct({ stateChanger, finalCat, finalSubCat, ...rest }) {
     const [state, setState] = useState({
@@ -33,7 +34,7 @@ function AddProduct({ stateChanger, finalCat, finalSubCat, ...rest }) {
                 "productStatus": state.productStatus,
             }
             // upload product and get product id
-            axios.post(`http://localhost:8082/api/vendor/product/156/insertProduct`, newProduct)
+            axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertProduct`, newProduct)
                 .then(result => {
                     setState({
                         ...state,

@@ -5,6 +5,8 @@ import { authenticateUser, isAuthUser } from '../../../helpers/auth'
 import { useStateValue } from '../../../StateProvider/StateProvider';
 
 import firebase from "../firebase/firebase-config.js";
+import { KEYS } from '../../keys';
+import { toast, ToastContainer } from 'react-toastify';
 
 const Signup = (props) => {
     const [store, dispatch] = useStateValue();
@@ -37,12 +39,28 @@ const Signup = (props) => {
         });
     };
 
+    // forgot
+    const setUpRecaptcha_b = () => {
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container-b', {
+            'size': 'normal',
+            'callback': (response) => {
+            },
+            'expired-callback': () => {
+                // Response expired. Ask user to solve reCAPTCHA again.
+                // ...
+            }
+        });
+    };
+
+
     const onSignInSubmit = (e) => {
-        document.getElementById('r1').style.display = "none"
+        var ii = document.getElementsByClassName('r1')
+        for (let i = 0; i < ii.length; i++) {
+            ii[i].style.display = "none"
+        }
         setUpRecaptcha();
         setCaptcha(true)
-        let phoneNumber = "+91" + number;
-        console.log(phoneNumber);
+        var phoneNumber = "+91" + number;
         let appVerifier = window.recaptchaVerifier
         firebase
             .auth()
@@ -51,20 +69,62 @@ const Signup = (props) => {
                 window.confirmationResult = confirmationResult;
                 window.recaptchaVerifier.clear()
                 setCaptcha(false)
-                document.getElementById('r1').style.display = "block"
-                // alert('otp send')
+                var ii = document.getElementsByClassName('r1')
+                for (let i = 0; i < ii.length; i++) {
+                    ii[i].style.display = "block"
+                }
+                toast.info('OTP send to ' + number)
                 toggleFields()
             })
             .catch(function (error) {
-                document.getElementById('r1').style.display = "block"
+                var ii = document.getElementsByClassName('r1')
+                for (let i = 0; i < ii.length; i++) {
+                    ii[i].style.display = "block"
+                }
                 window.recaptchaVerifier.clear()
                 setCaptcha(false)
                 console.log(error);
-                alert('something went wrong - or - change number - or - Network issue')
+                toast.error('Something Went Wrong')
+            });
+    };
+    // login end
+
+    // forget
+    const onForgetSubmit = (e) => {
+        var ii = document.getElementsByClassName('r1')
+        for (let i = 0; i < ii.length; i++) {
+            ii[i].style.display = "none"
+        }
+        setUpRecaptcha_b();
+        setCaptcha(true)
+        var phoneNumber = "+91" + fnumber;
+        let appVerifier = window.recaptchaVerifier
+        firebase
+            .auth()
+            .signInWithPhoneNumber(phoneNumber, appVerifier)
+            .then(function (confirmationResult) {
+                window.confirmationResult = confirmationResult;
+                window.recaptchaVerifier.clear()
+                setCaptcha(false)
+                var ii = document.getElementsByClassName('r1')
+                for (let i = 0; i < ii.length; i++) {
+                    ii[i].style.display = "block"
+                }
+                toast.info('OTP send to ' + fnumber)
+                toggleFieldsForgotB()
+            })
+            .catch(function (error) {
+                var ii = document.getElementsByClassName('r1')
+                for (let i = 0; i < ii.length; i++) {
+                    ii[i].style.display = "block"
+                }
+                window.recaptchaVerifier.clear()
+                setCaptcha(false)
+                console.log(error);
+                toast.error('Something Went Wrong')
             });
     };
 
-    // login end
 
     // toggle number and otp fileds
     const toggleFields = () => {
@@ -74,6 +134,10 @@ const Signup = (props) => {
     const toggleFieldsForgot = () => {
         document.getElementById('forgotField').classList.add('open');
         document.getElementById('codeFieldForgot').classList.remove('open');
+    }
+    const toggleFieldsForgotB = () => {
+        document.getElementById('forgotField').classList.remove('open');
+        document.getElementById('codeFieldForgot').classList.add('open');
     }
     const sendCode = () => {
         if (number == '') {
@@ -87,10 +151,8 @@ const Signup = (props) => {
         if (code == '') {
             alert('Code Required....')
         } else {
-
             let otpInput = code;
             let optConfirm = window.confirmationResult;
-            // console.log(codee);
             optConfirm
                 .confirm(otpInput)
                 .then(function (result) {
@@ -99,14 +161,14 @@ const Signup = (props) => {
                 })
                 .catch(function (error) {
                     console.log(error);
-                    alert("Incorrect OTP");
+                    toast.error('Invalid OTP')
                 });
 
         }
     }
+
     const closeRegister = () => {
         document.getElementById('signup').classList.remove('open')
-
         // reset fields
         document.getElementById('numberField').classList.remove('closeField')
         document.getElementById('codeField').classList.remove('openField')
@@ -134,8 +196,10 @@ const Signup = (props) => {
         setFPass2('')
     }
     const close = () => {
-        document.getElementById('r1').style.display = "block"
-        console.log('captcha', captcha)
+        var ii = document.getElementsByClassName('r1')
+        for (let i = 0; i < ii.length; i++) {
+            ii[i].style.display = "block"
+        }
         if (captcha) {
             window.recaptchaVerifier.clear()
             setCaptcha(false)
@@ -146,24 +210,40 @@ const Signup = (props) => {
     const setPassword = () => {
         let data = { name, number, password: pass1 }
 
-        axios.post(`http://localhost:8082/api/user/auth/156/userSignup`, data)
+        axios.post(`${KEYS.NODE_URL}/api/user/auth/156/userSignup`, data)
             .then(result => {
-                console.log(result)
                 authenticateUser(result, () => {
                     setName('')
                     setNumber('')
                     setPass1('')
                     setPass2('')
                 })
+                dispatch({
+                    type: 'LOGIN_USER',
+                    data: result.data.user
+                })
+                toast.success(name + ', Registeration Complete')
                 // close signup form
                 close();
             })
             .catch(err => {
-                console.log(err.response.data.error)
+                if (err?.response?.data?.error) {
+                    toast.error(err?.response?.data?.error)
+                } else {
+                    console.log(err)
+                }
             })
 
     }
     const openLoginBox = () => {
+        var ii = document.getElementsByClassName('r1')
+        for (let i = 0; i < ii.length; i++) {
+            ii[i].style.display = "block"
+        }
+        if (captcha) {
+            window.recaptchaVerifier.clear()
+            setCaptcha(false)
+        }
         closeRegister();
         document.getElementById('login').classList.add('open');
         document.getElementById('loginField').classList.remove('close');
@@ -174,75 +254,99 @@ const Signup = (props) => {
         document.getElementById('signup').classList.add('open')
     }
     const openForgotBox = () => {
+        var ii = document.getElementsByClassName('r1')
+        for (let i = 0; i < ii.length; i++) {
+            ii[i].style.display = "block"
+        }
         document.getElementById('loginField').classList.add('close');
         document.getElementById('forgotField').classList.add('open');
     }
     const openCodeForgot = () => {
-        document.getElementById('forgotField').classList.remove('open');
-        document.getElementById('codeFieldForgot').classList.add('open');
+        onForgetSubmit();
     }
     const verifyCodeForgot = () => {
-        document.getElementById('codeFieldForgot').classList.remove('open');
-        document.getElementById('passwordFieldForgot').classList.add('open');
+        // now time
+        if (fcode == '') {
+            alert('Code Required....')
+        } else {
+            let otpInput = fcode;
+            let optConfirm = window.confirmationResult;
+            optConfirm
+                .confirm(otpInput)
+                .then(function (result) {
+                    document.getElementById('codeFieldForgot').classList.remove('open');
+                    document.getElementById('passwordFieldForgot').classList.add('open');
+                })
+                .catch(function (error) {
+                    console.log(error);
+                    toast.error('Invalid OTP')
+                });
+
+        }
     }
     const setNewPassword = () => {
-        alert('New password is now setting....')
+        if (fpass1 != fpass2) {
+            toast.error('Passwords must be same')
+            return
+        }
+        let data = { number: fnumber, newPassword: fpass1 }
+        axios.post(`${KEYS.NODE_URL}/api/user/auth/156/userForget`, data)
+            .then(result => {
+                toast.success('Password Changed Successfully, Now Login')
+                close()
+                openLoginBox()
+            })
+            .catch(err => {
+                if (err?.response?.data?.error) {
+                    toast.error(err?.response?.data?.error)
+                } else {
+                    console.log(err)
+                }
+            })
+
+
     }
     const now_login = () => {
         let data = {
             phone: loginNum,
             password: loginPass,
         }
-        axios.post(`http://localhost:8082/api/user/auth/156/userSignin`, data)
-            .then(result => {
-                authenticateUser(result, () => {
-                    setLoginNum('')
-                    setLoginPass('')
-                })
-                dispatch({
-                    type: 'LOGIN_USER',
-                    data: result.data.user
-                })
-                axios.post(`http://localhost:8082/api/user/cart/156/get`, { userId: result.data.user.id })
-                    .then(results => {
-                        dispatch({
-                            type: 'SET_CART',
-                            items: results.data.cart
-                        })
-                    })
-                    .catch(err => {
-                        console.log(err.response.data.error)
-                    })
-
-                if (store.cart_pending != '') {
-                    var item = store.cart_pending
-                    item.userId = result.data.user.id
-                    axios.post(`http://localhost:8082/api/user/cart/156/add`, item)
-                        .then(result => {
-                            dispatch({
-                                type: 'ADD_TO_CART',
-                                item
-                            })
-                        })
-                        .catch(err => {
-                            console.log(err.response.data.error)
-                        })
-                }
-
-
-                // close signup form
-                close();
+        axios.post(`${KEYS.NODE_URL}/api/user/auth/156/userSignin`, data).then(result => {
+            toast.success('Login Successfully')
+            authenticateUser(result, () => {
+                setLoginNum('')
+                setLoginPass('')
             })
-            .catch(err => {
-                console.log(err.response.data.error)
-            })
+            dispatch({ type: 'LOGIN_USER', data: result.data.user })
+            axios.post(`${KEYS.NODE_URL}/api/user/cart/156/get`, { userId: result.data.user.id }).then(results => {
+                dispatch({ type: 'SET_CART', items: results.data.cart })
+                axios.post(`${KEYS.NODE_URL}/api/user/order/156/get`, { userId: result.data.user.id }).then(resultsss => {
+                    dispatch({ type: 'SET_ORDERS', orders: resultsss.data.orders })
+                }).catch(err => console.log(err.response.data.error))
+            }).catch(err => console.log(err.response.data.error))
+
+            if (store.cart_pending != '') {
+                var item = store.cart_pending
+                item.userId = result.data.user.id
+                axios.post(`${KEYS.NODE_URL}/api/user/cart/156/add`, item).then(result => {
+                    dispatch({ type: 'ADD_TO_CART', item })
+                    toast.info('Added To Cart')
+                }).catch(err => toast.error('Something Wrong'))
+            }
+            // close signup form
+            close();
+        }).catch(err => {
+            if (err?.response?.data?.error) {
+                toast.error(err?.response?.data?.error)
+            } else {
+                console.log(err)
+            }
+        })
     }
     return (
         <>
             <div className="signup" id="signup">
-                <div className="crose" onClick={close}>X<i className="fa fa-crose"></i></div>
-
-
+                <div className="crose" onClick={close}>X</div>
                 <div id="numberField">
                     <label htmlFor="" className='main'>Register For <b> <span>S</span>tyle <span>F</span>actory</b></label>
                     <div className="form-field">
@@ -251,7 +355,7 @@ const Signup = (props) => {
                     </div>
                     <div id="recaptcha-container"></div>
                     <div className="form-field">
-                        <button type="button" id={`r1`} onClick={sendCode}>Send OTP</button>
+                        <button type="button" className={`r1`} onClick={sendCode}>Send OTP</button>
                     </div>
                     <span className='main'>
                         Already a Member? <span onClick={openLoginBox}>Login Here</span>
@@ -303,10 +407,10 @@ const Signup = (props) => {
                         <input type="text" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} />
                     </div>
                     <div className="form-field">
+                        <span className='ff' onClick={openForgotBox}>Forgot password</span>
                         <button type="button" onClick={now_login}>Login</button>
                     </div>
-                    <span className='main'>
-                        <span onClick={openForgotBox}>Forgot password</span>
+                    <span className='main ll'>
                         <br />
                         Not an Member? <span onClick={openReigsterBox}>Register Here</span>
                     </span>
@@ -318,8 +422,9 @@ const Signup = (props) => {
                         <label htmlFor="">Enter Your Number</label>
                         <input type="text" value={fnumber} onChange={(e) => setFNumber(e.target.value)} />
                     </div>
+                    <div id="recaptcha-container-b"></div>
                     <div className="form-field">
-                        <button type="button" onClick={openCodeForgot}>Send Code</button>
+                        <button type="button" className={`r1`} onClick={openCodeForgot}>Send Code</button>
                     </div>
                     <span className='main'>
                         Not want to forgot?<span onClick={openLoginBox}> Login Here</span>

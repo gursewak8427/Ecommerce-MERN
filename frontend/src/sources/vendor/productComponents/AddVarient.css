@@ -1,3 +1,14 @@
+._llv{
+    font-weight: bolder;
+    font-size: 110%;
+    margin: 0;
+}
+._nV{
+    display: block;
+    width: 100%;
+    text-align: center;
+    color: white;
+}
 .form-general{
     width: 100%;
     height: auto;
@@ -6,6 +17,97 @@
     align-items: center;
     justify-content: flex-start;
 }
+.simpleDtl{
+    background: rgba(29, 28, 28, 0.274);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+.simpleDtl > label{
+    width: 100%;
+    color: white;
+    margin:0;
+    border-bottom: 1px solid whitesmoke;
+}
+
+.simpleDtl > span{
+    width: 100%;
+    padding: 0;
+}
+.simpleDtl > span label{
+    font-size: 90%;
+    margin: 0;
+    margin-bottom: 5px;
+}
+.simpleDtl > span .form-area{
+    width: 100%;
+    padding: 0; 
+}
+.form-area.btns{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+button.update{
+    background: rgb(10, 168, 121) !important;
+    color: white !important;
+}
+button.update:hover,
+button.delete:hover{
+    filter: brightness(.8);
+}
+
+button.delete{
+    background: red !important;
+    color: white !important;
+}
+.simpleDtl > span input{
+    padding: 0;
+    font-size: 90%; 
+}
+.simpleDtl > span button{
+    width: 100%;
+    margin: 0 !important;
+}
+.simpleDtl .listDtl{
+    margin: 20px 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+.simpleDtl .listDtl ul{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+.simpleDtl .listDtl ul li{
+    width: 100%;
+    background: whitesmoke;
+    margin: 5px 0;
+    padding: 2px;
+}
+.simpleDtl .listDtl ul span{
+    align-self: flex-end;
+    margin-right: 5px;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    background: rgba(255, 0, 0, 0.712);
+    color: white;
+    cursor: pointer;
+}
+
+
 .form-product button{
     background: white;
     color: #222;
@@ -231,14 +333,15 @@
     margin: 0 4px;
 }
 .varientList .sub-list .options{
-    color: rgb(255, 0, 212);
+    color: rgb(0, 0, 0);
     text-transform: uppercase;
     font-weight: bolder;
     letter-spacing: 2px;
     cursor: pointer;
+    text-decoration: underline;
 }
 .varientList .sub-list .options:hover{
-    color: rgba(255, 0, 212, 0.568);
+    color: grey;
 }
 
 .varientList .sub-list .topList{
@@ -302,6 +405,15 @@
     justify-content: flex-start;
     flex-wrap: wrap;
 }
+.listImages p:nth-of-type(1){
+    color: red !important;
+}
+.listImages p:nth-of-type(2){
+    color: orange !important;
+    margin-left: -5px;
+}
+
+
 .form-area .left .listImages .img{
     width: 30%;
     height: auto;

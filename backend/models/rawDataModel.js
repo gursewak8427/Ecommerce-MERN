@@ -5,17 +5,25 @@ const RawDataSchema = new mongoose.Schema({
         type: String,
     },
     categories: [{
-        _id: String,
+        // _id: String,
         categoryName: String,
         categoryIndex: String,
-        categoryImage: String
+        categoryImage: String,
+        categoryStatus: {
+            type: Number,
+            default: 1,
+        }
     }],
     subCategories: [{
-        _id: String,
+        // _id: String,
         subCategoryName: String,
         subCategoryIndex: String,
         subCategoryParent: String,
-        subCategoryImage: String
+        subCategoryImage: String,
+        subCategoryStatus: {
+            type: Number,
+            default: 1,
+        }
     }]
 });
 

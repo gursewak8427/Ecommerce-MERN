@@ -40,6 +40,8 @@
     padding: 5px 10px;
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
 }
 .attribute-content .right .attr-list > span{
     padding: 2px;
@@ -47,7 +49,83 @@
     font-size: 100%; 
     color: white;   
 }
+.newPush{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    background: #262d47;
+    width: 40%;
+    height: 40vh;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0px 0px 20px -1px black;
+    transform: translate(-50%,-50%) scale(0);
+    transition: .5s;
+}
+.newPush.active{
+    transform: translate(-50%,-50%) scale(1);
+}
+
+.newPush input{
+    text-align: center;
+    border: none;
+    color: white;   
+    border-bottom: 1px solid white;
+    background: none;
+    outline: none;
+    width: 100%;
+    margin: 10px 0;
+}
+.newPush button{
+    background: white;
+    padding: 5px 20px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+.newPush button:hover{
+    filter: brightness(.7);
+}
+
+.attribute-content .right .attr-list .atr{
+    padding: 0 !important; 
+    margin: 0 2px !important;
+    width: auto;
+    cursor: pointer;
+}
+.divError{
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+.divError span{
+    width: 100%;
+    padding: 10px;
+    background: white;
+}
+
+.divError .crs{
+    width: 20px;
+    height: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: red;
+    color: white;
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
 .attribute-content .right .attr-list > span{
+    width: 100%;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -55,21 +133,26 @@
     letter-spacing: 2px;
     font-weight: bolder;
     margin-bottom: 5px;
+    word-wrap: break-word;
 }
-.attribute-content .right .attr-list > span:nth-of-type(1) span:nth-of-type(2){
+.attribute-content .right .attr-list > span:nth-of-type(2) span:nth-of-type(1){
+    padding-right: 20px;
+}
+
+.attribute-content .right .attr-list > span:nth-of-type(1) > span:nth-of-type(2){
     color: red;
     cursor: pointer;
     letter-spacing: .5px;
 }
-.attribute-content .right .attr-list > span:nth-of-type(2) span:nth-of-type(2){
+.attribute-content .right .attr-list > span:nth-of-type(2) > span:nth-of-type(2){
     color: rgb(0, 247, 144);
     cursor: pointer;
     letter-spacing: .5px;
 }
-.attribute-content .right .attr-list > span:nth-of-type(1) span:nth-of-type(2):hover{
+.attribute-content .right .attr-list > span:nth-of-type(1) > span:nth-of-type(2):hover{
     color: rgb(230, 121, 121);
 }
-.attribute-content .right .attr-list > span:nth-of-type(2) span:nth-of-type(2):hover{
+.attribute-content .right .attr-list > span:nth-of-type(2) > span:nth-of-type(2):hover{
     color: rgb(9, 179, 108);
 }
 
