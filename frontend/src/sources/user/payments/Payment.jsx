@@ -9,12 +9,22 @@ import { KEYS } from '../../keys';
 const Payment = (props) => {
     let history = useHistory();
     const API_KEY = 'AIzaSyAb34F6xmw0e6-MBpAdNSvc6iUGNumDKdQ'
-
     const [store, dispatch] = useStateValue();
 
     const [state, setState] = useState({
         place: null,
+        cod: false,
     })
+
+    useEffect(() => {
+        axios.post(`${KEYS.NODE_URL}/api/vendor/156/getCOD`)
+            .then(result => {
+                setState({
+                    ...state,
+                    cod: result.data.cod
+                })
+            })
+    }, [])
 
     useEffect(() => {
         if (store.currentOrder.length == 0) { history.push(`/`) }
@@ -26,19 +36,21 @@ const Payment = (props) => {
         name: 'Style Factory',
         description: 'Best of Luck',
         image: 'https://cdn.razorpay.com/logos/7K3b6d18wHwKzL_medium.png',
+        // <========== oN_sUCcesS ==========>
         handler: function (response) {
-            console.log('success')
+            dispatch({ type: 'SET_LOADING' })
+            document.getElementById('shortLoading').style.display = 'block'
             var ordr = store.currentOrder[0]
             ordr.orderPayment = {
                 paymentType: 2,
                 paymentDetail: {
-                    TransitionId: 'abcdefghij'
+                    TransitionId: response.razorpay_payment_id,
                 }
             }
+            ordr.orderAddress = state.place
             // order to database
             axios.post(`${KEYS.NODE_URL}/api/user/order/156/add`, { userId: store.user.id, order: ordr })
                 .then(result => {
-
                     // decrease quantity of products
                     ordr.items.map(item => {
                         let var_id = item.productType == 1 ? item.varient._id : 0
@@ -48,43 +60,56 @@ const Payment = (props) => {
                     // empty cart after order
                     axios.post(`${KEYS.NODE_URL}/api/user/cart/156/set`, { userId: store.user.id, cart: [] })
                         .then(result => {
+                            document.getElementById('shortLoading').style.display = 'none'
+                            dispatch({ type: 'UNSET_LOADING' })
                             dispatch({ type: 'SET_CART', items: [] })
                             dispatch({ type: 'SET_CURRENT_ORDER', order: [] })
                             history.push(`/orders`);
+                        }).catch(err => {
+                            console.log(err)
+                            document.getElementById('shortLoading').style.display = 'none'
+                            dispatch({ type: 'UNSET_LOADING' })
                         })
-                        .catch(err => console.log(err))
 
                 })
                 .catch(err => {
+                    document.getElementById('shortLoading').style.display = 'none'
+                    dispatch({ type: 'UNSET_LOADING' })
                     console.log(err.response.data.error)
                 })
-
             // alert(response.razorpay_payment_id);
             // alert(response.razorpay_order_id);
             // alert(response.razorpay_signature)
         },
         prefill: {
-            name: 'Gaurav',
-            contact: '9999999999',
-            email: 'demo@demo.com'
+            name: store.user.name,
+            contact: store.user.phone,
         },
         notes: {
-            address: 'some address'
+            address: state.place?.place
         },
         theme: {
             color: '#09c28a',
             hide_topbar: false
+        },
+        "modal": {
+            "ondismiss": function () {
+                document.getElementById('shortLoading').style.display = 'none'
+                dispatch({ type: 'UNSET_LOADING' })
+            }
         }
     };
     const orderCOD = () => {
+        dispatch({ type: 'SET_LOADING' })
+        document.getElementById('shortLoading').style.display = 'block'
         var ordr = store.currentOrder[0]
         ordr.orderPayment = {
             paymentType: 1,
             paymentDetail: 'nothing'
         }
+        ordr.orderAddress = state.place
         axios.post(`${KEYS.NODE_URL}/api/user/order/156/add`, { userId: store.user.id, order: ordr })
             .then(result => {
-
                 // decrease quantity of products
                 ordr.items.map(item => {
                     let var_id = item.productType == 1 ? item.varient._id : 0
@@ -94,14 +119,21 @@ const Payment = (props) => {
                 // empty cart after order
                 axios.post(`${KEYS.NODE_URL}/api/user/cart/156/set`, { userId: store.user.id, cart: [] })
                     .then(result => {
+                        dispatch({ type: 'UNSET_LOADING' })
+                        document.getElementById('shortLoading').style.display = 'none'
                         dispatch({ type: 'SET_CART', items: [] })
                         dispatch({ type: 'SET_CURRENT_ORDER', order: [] })
                         history.push(`/orders`);
+                    }).catch(err => {
+                        dispatch({ type: 'UNSET_LOADING' })
+                        document.getElementById('shortLoading').style.display = 'none'
+                        console.log(err)
                     })
-                    .catch(err => console.log(err))
 
             })
             .catch(err => {
+                dispatch({ type: 'UNSET_LOADING' })
+                document.getElementById('shortLoading').style.display = 'none'
                 console.log(err)
             })
     }
@@ -110,9 +142,9 @@ const Payment = (props) => {
         order[0].orderAddress = state.place
         // Set Current Order
         dispatch({ type: 'SET_CURRENT_ORDER', order })
-
         var rzp1 = new window.Razorpay(options);
         rzp1.on('payment.failed', function (response) {
+            document.getElementById('shortLoading').style.display = 'none'
             console.log('failed')
             // alert(response.error.code);
             // alert(response.error.description);
@@ -144,7 +176,13 @@ const Payment = (props) => {
                         onChange={(e) => { setState({ ...state, place: e }) }}
                     />
                     {(state.place == null) || (state?.place?.place == "") ? <button className='disabled' onClick={openPayModal}>Checkout</button> : <button onClick={openPayModal}>Checkout</button>}
-                    {(state.place == null) || (state?.place?.place == "") ? <button className='disabled' onClick={orderCOD}>CASH ON DELIVERY</button> : <button onClick={orderCOD}>CASH ON DELIVERY</button>}
+                    {
+                        state.cod ?
+                            <>
+                                {(state.place == null) || (state?.place?.place == "") ? <button className='disabled' onClick={orderCOD}>CASH ON DELIVERY</button> : <button onClick={orderCOD}>CASH ON DELIVERY</button>}
+                            </>
+                            : null
+                    }
                 </div>
             </div>
         </>

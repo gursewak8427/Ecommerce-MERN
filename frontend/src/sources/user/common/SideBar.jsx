@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { useStateValue } from '../../../StateProvider/StateProvider';
 import { useHistory } from "react-router-dom";
-import { isAuthUser, signoutUser } from '../../../helpers/auth';
+import { signoutUser } from '../../../helpers/auth';
 
 import './SideBar.css'
 
@@ -49,10 +49,14 @@ const SideBar = (props) => {
     }
     const signOut = () => {
         dispatch({
-            type: 'LOGIN_USER',
+            type: 'LOGOUT_USER',
             data: ''
         })
-        signoutUser()
+        dispatch({
+            type: 'UNSET_USER',
+            data: ''
+        })
+        removeCookie('token-client')
         history.push(`/`);
         document.getElementById('sideBar').classList.remove('open')
         document.getElementById('menuBtn').classList.remove('open')
@@ -61,7 +65,7 @@ const SideBar = (props) => {
         <>
             <aside id="sideBar" className=''>
                 <div className="data a">
-                    <li><span><span >Hello</span> {store.user == '' ? (<span className='signin' onClick={signin}>Sign In</span>) : (<span className='navName' onClick={() => goTo('p')}>{store.user.name}</span>)} </span></li>
+                    <li><span><span >Hello</span> {store.user == '' ? (<span className='signin' onClick={signin}>Sign In</span>) : (<span className='navName' onClick={() => goTo('p')}>{store.user?.name}</span>)} </span></li>
                     <li onClick={openSideMenu}>Shop By Category</li>
                     <li onClick={() => goTo('o')}>Orders</li>
                     <li onClick={() => goTo('c')}>Cart</li>

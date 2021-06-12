@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Redirect, Link } from 'react-router-dom'
 import axios from 'axios'
-import { authenticate, isAuth } from '../../../helpers/auth'
 
+import { getTokenAdmin } from '../../../helpers/auth';
 import './VAttributes.css'
 import { KEYS } from '../../keys';
+import { useStateValue } from '../../../StateProvider/StateProvider';
 
 function VAttributes() {
+    const [store, dispatch] = useStateValue();
     const [state, setState] = useState({
         attributes: [],
         attr: '',
@@ -16,32 +18,68 @@ function VAttributes() {
         error: []
     })
     useEffect(() => {
-        axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getAttribute`)
+        dispatch({
+            type: 'SET_LOADING'
+        })
+        axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getAttribute`,
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 setState({ ...state, attributes: result.data.myAttributes })
             }).catch(err => {
                 console.log(err)
             })
     }, [])
     const onSubmit = () => {
-        document.getElementById('attrAddBtn').disabled = true
+        if(state.attr == '' || state.val == ''){
+            alert('All fields are required')
+            return
+        }
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let newAttr = {
             attribute: state.attr,
             values: state.val
         }
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertAttribute`, newAttr)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertAttribute`, newAttr,
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 setState({ ...state, attr: '', val: '', attributes: result.data.myAttributes })
-                document.getElementById('attrAddBtn').disabled = false
             }).catch(err => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 console.log(err)
-                document.getElementById('attrAddBtn').disabled = false
             })
     }
     const removeAttr = id => {
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteAttribute`, { id })
+        dispatch({
+            type: 'SET_LOADING'
+        })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteAttribute`, { id },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
-                console.log(result)
                 if (result.data?.error) {
                     state.error = []
                     result.data?.error.map(obj => {
@@ -51,7 +89,13 @@ function VAttributes() {
                 } else {
                     setState({ ...state, attributes: result.data.myAttributes })
                 }
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })      
             }).catch(err => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 console.log('err', err)
             })
     }
@@ -78,11 +122,20 @@ function VAttributes() {
         document.getElementsByClassName('newPush')[0].classList.remove('active')
     }
     const addNewPush = () => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let data = {
             id: state.updatedAttrId,
             value: state.newPushVal
         }
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/pushNewAttribute`, data)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/pushNewAttribute`, data,
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
                 if (result.data.myAttributes == 0) {
                     alert('value is already present')
@@ -90,18 +143,39 @@ function VAttributes() {
                     setState({ ...state, attributes: result.data.myAttributes, updatedAttrId: undefined, newPushVal: '' })
                     document.getElementsByClassName('newPush')[0].classList.remove('active')
                 }
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
             }).catch(err => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 console.log('err', err)
             })
     }
     const deleteThisAttrValue = (id, index) => {
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getAttributeWithId`, { id })
+        dispatch({
+            type: 'UNSET_LOADING'
+        })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getAttributeWithId`, { id },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
                 let myAtr = result.data.myAttribute
                 if (myAtr.numProduct[index].length == 0) {
                     myAtr.values.splice(index, 1)
                     myAtr.numProduct.splice(index, 1)
-                    axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/setAttributes`, { id, attribute: myAtr })
+                    axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/setAttributes`, { id, attribute: myAtr },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `barear ${getTokenAdmin()}`
+                          }
+                    })
                         .then(results => {
                             setState({ ...state, attributes: results.data.myAttribute })
                         }).catch(err => {
@@ -110,7 +184,13 @@ function VAttributes() {
                 } else {
                     alert('This Value is used in product. If you want to delete first delete those product varient')
                 }
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
             }).catch(err => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 console.log(err)
             })
     }
@@ -123,7 +203,6 @@ function VAttributes() {
 
     return (
         <>
-            {!isAuth() ? <Redirect to='/vendor/login' /> : null}
             <div className="v-wrapper">
                 <div className="design"></div>
                 <div className="v-product">
@@ -150,7 +229,7 @@ function VAttributes() {
                                         {
                                             state.error.map((error, index) => (
                                                     <span key={index}>
-                                                        <b>Error:</b> "{error[0]}" is used in Product Id's : {error[1].map(err => <span>{err},</span>)}
+                                                        <b>Error:</b> "{error[0]}" is used in Product Id's : {error[1].map((err, index) => index < 1 ? <span>{err},</span> : index == 1 ? 'etc..' : null)}
                                                         <br/>
                                                         <i>First Delete These Products or Varient</i>
                                                     </span>
@@ -169,7 +248,7 @@ function VAttributes() {
                                         </span>
                                         <span>
                                             <span>
-                                                {obj.values.map((val, index) => <span key={index} onClick={() => deleteThisAttrValue(obj._id, index)} className='atr'>{val},</span>)}
+                                                {obj.values.map((val, index) => <span key={index} onClick={() => deleteThisAttrValue(obj._id, index)} className='atr'>{val},<span className='crooss'>X</span></span>)}
                                             </span>
                                             <span onClick={() => pushNew(obj._id)}>New</span>
                                         </span>
@@ -181,6 +260,7 @@ function VAttributes() {
                         <div className="newPush">
                             <div className="crose" onClick={() => closeNewPush()}>X</div>
                             <input type="text" name='newPushVal' onChange={onChange} value={state.newPushVal} placeholder='Add New Value' />
+                            <span style={{color: "white"}}>Note: please add only one value at a time</span>
                             <button onClick={addNewPush}>Add New</button>
                         </div>
                     </div>

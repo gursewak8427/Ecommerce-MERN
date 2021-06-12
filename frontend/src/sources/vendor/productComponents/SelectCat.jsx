@@ -5,8 +5,11 @@ import ImageUploader from 'react-images-upload'
 
 import './SelectCat.css'
 import { KEYS } from '../../keys';
+import { useStateValue } from '../../../StateProvider/StateProvider';
+import { getTokenAdmin } from '../../../helpers/auth';
 
 const SelectCat = ({ stateChanger, ...rest }) => {
+    const [store, dispatch] = useStateValue();
     const [state, setState] = useState({
         selectedCategory: undefined,
         selectedCategoryName: '',
@@ -14,24 +17,45 @@ const SelectCat = ({ stateChanger, ...rest }) => {
         pictures: [],
         picUrls: [],
         newCategoryName: '',
+        empty: false,
     })
+
     useEffect(() => {
-        axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getCategories`)
+        dispatch({
+            type: 'SET_LOADING'
+        })
+        axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getCategories`,
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
+                if (result.data.myCategories.length == 0) {
+                    setState({
+                        ...state,
+                        empty: true
+                    })
+                    dispatch({
+                        type: 'UNSET_LOADING'
+                    })
+                    return
+                }
                 state.catList = []
+                let e = true
                 result.data.myCategories.map(cat => {
+                    cat.categoryStatus == 1 ? e = false : null
                     let newCat = {
                         catId: cat._id,
                         catName: cat.categoryName,
                         catImage: cat.categoryImage,
+                        catStatus: cat.categoryStatus
                     }
                     state.catList.push(newCat)
                 })
-                setState({
-                    ...state,
-                    catList: state.catList
-                });
-
+                e ? setState({ ...state, catList: state.catList, empty: true }) : setState({ ...state, catList: state.catList });
+                dispatch({ type: 'UNSET_LOADING' })
                 // document.getElementById(`updateVarBtn${var_id}`).disabled = false
             })
             .catch(err => {
@@ -53,15 +77,11 @@ const SelectCat = ({ stateChanger, ...rest }) => {
             cat.catId == e.target.value ? setState({ ...state, [e.target.name]: e.target.value, selectedCategoryName: cat.catName }) : null
         ))
 
-        var i = 0
-        while (i < state.catList.length) {
-            if (i == id) {
-                document.getElementById(`cat_label_${i}`).classList.add('selected')
-            } else {
-                document.getElementById(`cat_label_${i}`).classList.remove('selected')
-            }
-            i += 1
+        let d = document.getElementsByClassName(`catLabel`)
+        for (let i = 0; i < d.length; i++) {
+            d[i].classList.remove('selected')
         }
+        document.getElementById(`cat_label_${id}`).classList.add('selected')
     }
 
     const onSubmit = (e) => {
@@ -70,27 +90,42 @@ const SelectCat = ({ stateChanger, ...rest }) => {
             return
         }
         if (true) {
-            document.getElementsByClassName('timeLine1')[0].classList.remove('active')
-            document.getElementsByClassName('timeLine1')[1].classList.remove('active')
+            document.getElementsByClassName('product-content')[0].classList.add('animate')
+            setTimeout(() => {
+                document.getElementsByClassName('product-content')[0].classList.remove('animate')
+                document.getElementsByClassName('timeLine1')[0].classList.remove('active')
+                document.getElementsByClassName('timeLine1')[1].classList.remove('active')
 
-            document.getElementsByClassName('timeLine1')[0].classList.add('done')
-            document.getElementsByClassName('timeLine1')[1].classList.add('done')
+                document.getElementsByClassName('timeLine1')[0].classList.add('done')
+                document.getElementsByClassName('timeLine1')[1].classList.add('done')
 
-            document.getElementsByClassName('timeLine2')[0].classList.add('active')
-            document.getElementsByClassName('timeLine2')[1].classList.add('active')
+                document.getElementsByClassName('timeLine2')[0].classList.add('active')
+                document.getElementsByClassName('timeLine2')[1].classList.add('active')
 
-            stateChanger(
-                {
-                    ...state,
-                    ['task']: '2',
-                    ['selectedCategory']: [state.selectedCategory, state.selectedCategoryName],
-                }
-            )
+                stateChanger(
+                    {
+                        ...state,
+                        ['task']: '2',
+                        ['selectedCategory']: [state.selectedCategory, state.selectedCategoryName],
+                    }
+                )
+            }, 500)
+
         }
     }
     const makeCat = () => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
+        document.getElementById('makeCatBtn').disabled = true
+        document.getElementsByClassName('add_new')[0].disabled = true
         if (state.newCategoryName == '') {
+            dispatch({
+                type: 'UNSET_LOADING'
+            })
             alert('Plese Enter New Category Name')
+            document.getElementById('makeCatBtn').disabled = false
+            document.getElementsByClassName('add_new')[0].disabled = false
             return
         }
         let uploadPromises = state.pictures.map(image => {
@@ -98,7 +133,13 @@ const SelectCat = ({ stateChanger, ...rest }) => {
             data.append('file', image);
             data.append('upload_preset', 'eshoppyzone');
             data.append('cloud_name', 'mycloud8427');
-            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data)
+            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            })
         })
         axios.all(uploadPromises)
             .then(results => {
@@ -114,8 +155,17 @@ const SelectCat = ({ stateChanger, ...rest }) => {
                     "newCategoryName": state.newCategoryName,
                     "images": state.picUrls,
                 }
-                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertCategory`, data)
+                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertCategory`, data,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `barear ${getTokenAdmin()}`
+                      }
+                })
                     .then(result => {
+                        dispatch({
+                            type: 'UNSET_LOADING'
+                        })
                         document.getElementsByClassName('addCat')[0].classList.toggle('show')
                         document.getElementsByClassName('add_new')[0].classList.toggle('open')
                         state.catList = []
@@ -124,6 +174,7 @@ const SelectCat = ({ stateChanger, ...rest }) => {
                                 catId: cat._id,
                                 catName: cat.categoryName,
                                 catImage: cat.categoryImage,
+                                catStatus: cat.categoryStatus
                             }
                             state.catList.push(newCat)
                         })
@@ -133,18 +184,22 @@ const SelectCat = ({ stateChanger, ...rest }) => {
                             catList: state.catList,
                             pictures: state.pictures,
                             picUrls: [],
-                            newCategoryName: ''
+                            newCategoryName: '',
+                            empty: false,
                         });
-                        // document.getElementById(`updateVarBtn${var_id}`).disabled = false
+                        document.getElementsByClassName('add_new')[0].disabled = false
+                        document.getElementById('makeCatBtn').disabled = false
                     })
                     .catch(err => {
-                        // document.getElementById(`updateVarBtn${var_id}`).disabled = false
+                        document.getElementById('makeCatBtn').disabled = false
+                        document.getElementsByClassName('add_new')[0].disabled = false
                         console.log(err)
                     })
             })
             .catch(e => {
+                document.getElementsByClassName('add_new')[0].disabled = false
+                document.getElementById('makeCatBtn').disabled = false
                 console.log('error', e)
-                // document.getElementById(`updateVarBtn${var_id}`).disabled = false
             })
     }
     const addNewCat = () => {
@@ -156,7 +211,7 @@ const SelectCat = ({ stateChanger, ...rest }) => {
             <div className="bottom_btns">
                 <button type='button' className='add_new' onClick={addNewCat}>+</button>
                 <button type='button' onClick={onSubmit} className='continue_btn' title='continue'><span className={state.selectedCategoryName == '' ? 'hide' : ''}>{state.selectedCategoryName}</span><i className='fa fa-arrow-right'></i></button>
-            </div>
+            </div >
             <div className="addCat">
                 <div className="form-area">
                     <label htmlFor="">Category Name</label>
@@ -166,28 +221,27 @@ const SelectCat = ({ stateChanger, ...rest }) => {
                     <ImageUploader
                         withPreview={true}
                         onChange={onDrop}
-                        imgExtension={['.jpg', '.png']}
+                        imgExtension={['.jpg', '.png', '.jpeg']}
                         maxFileSize={5242880}
                         buttonText={'Upload New Images'}
                         singleImage={true}
                     />
                 </div>
                 <div className="form-area">
-                    <button onClick={makeCat}>Insert New Category</button>
+                    <button id='makeCatBtn' onClick={makeCat}>Insert New Category</button>
                 </div>
             </div>
             <div className="form-area">
                 <div className="select">
                     {
-                        state.catList.length == 0 ? <span style={{ color: "white", margin: "10px 0" }}>No Category Available, create New Category now from plus(+) sign bottom</span> : null
+                        state.empty ? <span className='textNoFound'>No Active Category Available, create New Category now from plus(+) sign bottom</span> : null
                     }
                     {
-                        state.catList.map((data, index) => (
+                        state.catList.map((data, index) => data.catStatus == 1 ?
                             <div key={index} className={`option ${index}`}>
-                                <label htmlFor={`selectedCategory${index}`} id={`cat_label_${index}`}>{data.catName}</label>
+                                <label htmlFor={`selectedCategory${index}`} className={'catLabel'} id={`cat_label_${index}`}>{data.catName}</label>
                                 <input type="radio" name="selectedCategory" id={`selectedCategory${index}`} value={data.catId} onChange={(e) => { onChange(e, index) }} />
-                            </div>
-                        ))
+                            </div> : null)
                     }
                 </div>
             </div>

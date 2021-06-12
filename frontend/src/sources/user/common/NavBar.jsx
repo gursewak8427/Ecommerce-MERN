@@ -3,24 +3,70 @@ import { Link, useHistory, useParams } from 'react-router-dom';
 
 import { KEYS } from '../../keys'
 import './NavBar.css'
-import { isAuthUser, signoutUser } from '../../../helpers/auth';
+import { removeCookie } from '../../../helpers/auth';
 import { useStateValue } from '../../../StateProvider/StateProvider';
 import axios from 'axios'
 
 
 const NavBar = (props) => {
     const [store, dispatch] = useStateValue();
-    const [searchItem, setSearchItem] = useState('');
+    const [searchItem, setSearchItem] = useState('')
     const [a, setA] = useState(false)
 
-    let history = useHistory();
+    const [countNotify, setCountNotify] = useState(1)
+    const [emptyNotify, setEmptyNotify] = useState(false)
+    const [notifyLoading, setNotifyLoading] = useState(false)
+
+    let history = useHistory()
+
     useEffect(() => {
-        let user = isAuthUser()
-        if (user) {
-            dispatch({
-                type: 'LOGIN_USER',
-                data: user
+        let user = store.user
+        if (user == '') {
+            return
+        }
+        // get Notifications
+        axios.post(`${KEYS.NODE_URL}/api/user/order/156/getNewNotify`, { userId: user.id })
+            .then(result => {
+                dispatch({
+                    type: 'SET_NEWNOTIFY',
+                    number: result.data.newNotify
+                })
             })
+            .catch(err => {
+                console.log(err.response.data.error)
+            })
+    }, [])
+
+    useEffect(() => {
+        let user = store.user
+        if (user == '') {
+            return
+        }
+        setNotifyLoading(true)
+        axios.post(`${KEYS.NODE_URL}/api/user/order/156/getNotify`, { userId: user.id, count: countNotify })
+            .then(result => {
+                if (result.data.notify.length == 0) {
+                    setEmptyNotify(true)
+                } else {
+                    let a = store.notifyList
+                    a = a.concat(result.data.notify)
+                    dispatch({
+                        type: 'SET_NOTIFY',
+                        notifyList: a
+                    })
+                }
+                setNotifyLoading(false)
+            })
+            .catch(err => {
+                console.log(err.response.data.error)
+            })
+
+    }, [countNotify])
+
+
+    useEffect(() => {
+        let user = store.user
+        if (user != '') {
             axios.post(`${KEYS.NODE_URL}/api/user/cart/156/get`, { userId: user.id })
                 .then(result => {
                     dispatch({
@@ -98,10 +144,19 @@ const NavBar = (props) => {
     }
     const signOut = () => {
         dispatch({
-            type: 'LOGIN_USER',
+            type: 'SET_NOTIFY',
+            notifyList: []
+        })
+        dispatch({
+            type: 'SET_NEWNOTIFY',
+            number: 0
+        })
+
+        dispatch({
+            type: 'UNSET_USER',
             data: ''
         })
-        signoutUser()
+        removeCookie('token-client')
         history.push(`/`);
     }
     const goToProfile = () => {
@@ -117,20 +172,50 @@ const NavBar = (props) => {
         history.push(`/search/${searchItem}`)
         openSearchBox()
     }
-   
+    const openNotifyBox = () => {
+        document.getElementsByClassName('notifyBox')[0].classList.add('active')
+        document.getElementsByClassName('notifyBtn')[0].classList.add('show')
+    }
+    const closeNotifyBox = () => {
+        let user = store.user
+        if (user != '') {
+            // set zero Notifications
+            axios.post(`${KEYS.NODE_URL}/api/user/order/156/setNewNotify`, { userId: user.id })
+                .then(result => {
+                    dispatch({
+                        type: 'SET_NEWNOTIFY',
+                        number: result.data.newNotify
+                    })
+                })
+                .catch(err => {
+                    console.log(err.response.data.error)
+                })
+        }
+        document.getElementsByClassName('notifyBox')[0].classList.remove('active')
+        document.getElementsByClassName('notifyBtn')[0].classList.remove('show')
+    }
+    const loadMoreNotify = () => {
+        if (!emptyNotify) {
+            setCountNotify(countNotify + 1)
+        }
+    }
+    const goToo = () => {
+        closeNotifyBox()
+        history.push('/orders')
+    }
     return (
         <>
             <div className="top" id="top">
-                <nav className={`ab ${store.loading ? 'loading' : ''}`}>
+                <nav className={`ab ${store.loading ? 'loading' : ''}  ${store.navLoading ? 'loading' : ''}`}>
                     <div onClick={toggleSideBar} id="menuBtn" className="menuBtn">
                         <span></span><span></span><span></span>
                     </div>
                     <div className="mainLogoBox">
                         <Link className='links' to='/'>
-                            <img alt='Style Factory' src={`https://download.logo.wine/logo/Wide_Open_West/Wide_Open_West-Logo.wine.png`} />
+                            <img alt='Style Factory' src={`https://res.cloudinary.com/mycloud8427/image/upload/v1622750163/3_cdjew4.png`} />
                         </Link>
                     </div>
-                    <i className={`fa fa-${a ? 'times' : 'search'} mobSearch`} onClick={openSearchBox}/>
+                    <i className={`fa fa-${a ? 'times' : 'search'} mobSearch`} onClick={openSearchBox} />
                     <div className="proFileBtn" onClick={goToProfile}>
                         <img src='https://www.seekpng.com/png/full/138-1388103_user-login-icon-login.png' />
                     </div>
@@ -143,11 +228,11 @@ const NavBar = (props) => {
                                 <li>Fruits3</li>
                             </div>
                         </div> */}
-                        <input type="text" name="" defaultValue={store.searchItem} value={searchItem} onChange={(e)=>setSearchItem(e.target.value)} id="mainSearchField" />
-                        <i className="fa fa-search" aria-hidden="true" onClick={searchNow}/>
+                        <input type="text" name="" value={searchItem} onChange={(e) => setSearchItem(e.target.value)} id="mainSearchField" />
+                        <i className="fa fa-search" aria-hidden="true" onClick={searchNow} />
                     </div>
                     <div className="accountBox a">
-                        <span><span >Hello</span> {store.user == '' ? (<span className='signin' onClick={signin}>Sign In</span>) : (<span className='navName a'>{store.user.name}<div id='accountDropDown'> <li onClick={goToProfile}>Profile</li> <li onClick={signOut}>Logout</li> </div></span>)} </span>
+                        <span><span >Hello</span> {store.user == '' ? (<span className='signin' onClick={signin}>Sign In</span>) : (<span className='navName a'>{store.user?.name}<div id='accountDropDown'> <li onClick={goToProfile}>Profile</li> <li onClick={signOut}>Logout</li> </div></span>)} </span>
                     </div>
                     <Link className='links a' to='/orders'>
                         <div className="orderBox">
@@ -156,11 +241,27 @@ const NavBar = (props) => {
                             <span>& Orders</span>
                         </div>
                     </Link>
+                    <div className={`notifyBtn ${store.newNotify > 0 ? 'active' : ''}`}>
+                        <i className="far fa-bell" onClick={openNotifyBox}></i>
+                        <span onClick={openNotifyBox}>{store.newNotify > 9 ? <span>9+</span> : store.newNotify}</span>
+                        <div className="notifyBox">
+                            <div className="closeNotify" onClick={closeNotifyBox}>Close</div>
+                            {
+                                store.notifyList.length == 0 ? <i>You havn't any Notification</i> :
+                                    store.notifyList.map((notify, index) => <li key={index} onClick={goToo} className={`${index < store.newNotify ? 'new' : ''}`}>{index + 1}) {notify}</li>)
+                            }
+                            {
+                                notifyLoading ? <div className="loadmore">Loading...</div> :
+                                    emptyNotify ?
+                                        <div className="loadmore">No More</div> :
+                                        <div className="loadmore" onClick={loadMoreNotify}>More ▼</div>
+                            }
+                        </div>
+                    </div>
                     <Link className='links a' to='/cart'>
                         <div className="cartBox">
                             <span>{store.cart.length}</span>
                             <i className="fa fa-shopping-cart" aria-hidden="true" />
-                            <span>Cart</span>
                         </div>
                     </Link>
                 </nav>
@@ -169,7 +270,7 @@ const NavBar = (props) => {
                         <span className='all'>
                             All
                         </span>
-                    </span> 
+                    </span>
                     {
                         store.rawdata?.categories?.map((cat, index) =>
                             cat.categoryStatus == 1 ?

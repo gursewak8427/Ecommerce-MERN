@@ -16,6 +16,52 @@
     justify-content: flex-start;
     margin: 0;
     padding: 0;
+    background: rgb(214, 212, 212);
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+.subTop{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+.subTop > span{
+    padding: 2px 0;
+}
+.subTop > span span{
+    font-weight: bolder;
+}
+
+.printBtn{
+    padding: 5px 10px;
+    background: teal;
+    text-align: center;
+    color: white;
+    font-weight: bolder;
+    letter-spacing: 1px;
+    margin: 10px 0;
+    cursor: pointer;
+}
+.BillDiv{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 999999;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 0 10px 2px grey;
+}
+.NoOrders{
+    width: 98%;
+    margin: 10px 0;
+    text-align: center;
+    background: whitesmoke;
+    padding: 10px 0;
+    color: #e21e3f;
+    font-weight: bolder;
 }
 .vorders .order > .content{
     width: 100%;
@@ -26,7 +72,6 @@
     align-items: center;
     justify-content: flex-start;
     padding: 10px 5px;
-    border-bottom: 1px solid grey;
     cursor: pointer;
 }
 .vorders .order .details{
@@ -36,47 +81,60 @@
     display: none;
     flex-direction: column;
 }
-.vorders .order .details .status{
-    width: 100%;
+.vorders .order .details .topDtl{
+    width: auto;
     display: flex;
     font-display: row;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 5px;
 }
-.vorders .order .details .status select{
+.vorders .order .details .topDtl .address{
+    padding-left: 10px;
+    font-size: 90%;
+}
+.vorders .order .details .topDtl .address button{
+    padding: 3px 10px;
+    border: none;
+    background: teal;
+    color: white;
+}
+.vorders .order .details .topDtl select{
     padding: 5px 10px;
     border: none;
     outline: none;
 }
-
 .vorders .order .details .items{
     width:100%;
     display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: flex-start;
+    flex-direction: column;
     flex-wrap: wrap;
     padding: 20px 0;
 }
 
 .vorders .order .details .items .item{
     margin: 5px;
-    min-width: 230px;
-    max-width: 230px;
+    width: 100%;
     cursor: pointer;
 }
 .vorders .order .details .items .item:hover{
     box-shadow: none;
 }
 .vorders .order .details .items .item img{
-    width: 100%;
+    width: 230px;
     min-height: 240px;
     max-height: 240px;
+    margin-right: 10px;
 }
 .vorders .order .details .items .item span{
-    font-size: 80%;
+    font-size: 100%;
     margin: 2px;
+    text-align: left;
+    width: 100%;
+}
+.vorders .order .details .items .item span:nth-of-type(1){
+    font-weight: bolder;
+    text-transform: capitalize;
 }
 .vorders .order .details .items .item .content{
     display: flex;
@@ -84,17 +142,14 @@
     align-items: center;
     justify-content: flex-start;
 }
-
-
-
 .vorders .order .details.active{
     display: flex;
 }
 .vorders .order > .content:hover{
-    background: rgba(128, 128, 128, 0.733);
+    background: rgba(128, 128, 128, 0.2);
 }
 .vorders .order > .content > span{
-    text-align: center;
+    text-align: left;
     padding: 2px 5px;
     border-right: 1px solid grey;
 }
@@ -103,3 +158,42 @@
     text-align: center;
 }
 
+@media screen and (max-width: 650px) {
+    .vorders{
+        background: white;        
+    }
+    .vorders .order{
+        margin: 5px 0;
+    }
+    .vorders .order > .content{
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .vorders .order > .content:hover,
+    .vorders .order > .content:focus{
+        background: none;
+    }
+    .vorders .order > .content span{
+        border: none;
+        text-align-last: left;
+    }
+    .vorders .order > .content span.id{
+        width: 95%;
+        overflow: auto;
+    }
+    .vorders .order > .content span.id::-webkit-scrollbar{
+        height: 0px;
+    }
+    .vorders .order .details .items .item{
+        margin: 1%;
+        min-width: 48%;
+        max-width: 48%;
+        cursor: pointer;
+    }
+    .vorders .order .details .items .item img{
+        min-height: auto;
+        max-height: auto;
+    }
+
+   
+}

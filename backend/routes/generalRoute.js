@@ -94,6 +94,11 @@ router.post('/deleteSlider/', async (req, res) => {
     let myData = await General.findOne()
     index = req.body.index
     if (myData) {
+        // distroy images
+        myData.mainSlider[index].image.map(async (img) => {
+            let publicId = img.split('/')[img.split('/').length - 1].split('.')[0]
+            await cloudinary.uploader.destroy(publicId, { type: 'upload' });
+        })
         myData.mainSlider.splice(index, 1)
         let finalData = await myData.save()
         res.json({

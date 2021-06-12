@@ -1,10 +1,10 @@
 .signup,
-    .login{
+.login{
     background: rgb(255, 255, 255);
     position: fixed;
-    top: 0;
-    left: 0;
-    transform: scale(0);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
     z-index: 99999999;
     width: 40%;
     height: 70vh;
@@ -18,12 +18,11 @@
     overflow: hidden;
     border: 3px solid whitesmoke;
     box-shadow: 0px 0px 50px 5px black;
-    overflow: auto;
 }
 .signup.open,
 .login.open{
     transition: .4s;
-    transform: scale(1);
+    transform: translate(-50%, -50%) scale(1);
 }
 
 label.main{
@@ -231,6 +230,14 @@ span.main > span{
     .login{
         width: 100%;
         height: 100vh;
+        top: 0;
+        left: 0;
+        transform: scale(0);
+    }
+    .signup.open,
+    .login.open{
+        transition: .4s;
+        transform: scale(1);
     }
     .form-field{
         width: 90%;

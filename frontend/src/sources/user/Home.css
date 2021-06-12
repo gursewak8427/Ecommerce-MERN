@@ -168,13 +168,18 @@
     color: black;
     text-decoration: underline;
 }
+.row-slider.aa .items{
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
 .row-slider .items{
     width: 100%;
     height: auto;
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    justify-content: space-between;
+    justify-content: flex-start;
     flex-wrap: wrap;
     padding: 0 10px;
 }
@@ -333,7 +338,7 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    transform: translateY(100%);
+    transform: translateY(110%);
     transition: .15s;
 }
 .row-slider .items .item:hover .details{

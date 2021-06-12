@@ -54,6 +54,10 @@
     justify-content: space-evenly;
     flex-wrap: wrap;
 }
+.items.categoryPage.center{
+    justify-content: center;
+}
+
 .categoryTop .list li{
     margin: 0px 5px;
     padding: 3px 10px;
@@ -125,9 +129,25 @@
     text-align: center;
     margin-top: 10px;
     padding: 3px 0;
+    clear: both;
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    /* animation: textScrolled 10s linear infinite forwards; */
 }
 .items .item:hover .name{
     background: rgba(0, 0, 0, 0.171);
+}
+@keyframes textScrolled{
+    0%{
+        transform: translateX(0px);
+    }
+    50%{
+        transform: translateX(-100%);
+    }
+    100%{
+        transform: translateX(0px);
+    }
 }
 .items .item .topDetails{
     max-width: 100%;
@@ -228,7 +248,7 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    transform: translateY(100%);
+    transform: translateY(110%);
     transition: .15s;
 }
 .items .item:hover .details{

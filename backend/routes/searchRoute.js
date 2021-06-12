@@ -6,6 +6,7 @@ const Product = require('../models/productModel');
 const Attribute = require('../models/attributeModel');
 const RawData = require('../models/rawDataModel');
 const General = require('../models/generalModel');
+const User = require('../models/userModel');
 
 router.post('/search', async (req, res) => {
     let data
@@ -37,14 +38,16 @@ router.post('/search', async (req, res) => {
         if (sortingMethod == 1) {
             data = await Product.find(
                 {
-                    'productName': { $regex: item, $options: 'i' },
-                    $or: [{ 'productOverallMinPrice': { $gte: minPrice, $lte: maxPrice } }, { 'productOverallMaxPrice': { $gte: minPrice, $lte: maxPrice } }]
+                    $and: [
+                        { $or: [{ 'productName': { $regex: item, $options: 'i' } }, { 'productKeywords': { $regex: item, $options: 'i' } }] },
+                        { $or: [{ 'productOverallMinPrice': { $gte: minPrice, $lte: maxPrice } }, { 'productOverallMaxPrice': { $gte: minPrice, $lte: maxPrice } }] }
+                    ]
                 }
             ).skip(skip).limit(limit)
         } else {
             data = await Product.find(
                 {
-                    'productName': { $regex: item, $options: 'i' },
+                    $or: [{ 'productName': { $regex: item, $options: 'i' } }, { 'productKeywords': { $regex: item, $options: 'i' } }],
                     $or: [{ 'productOverallMinPrice': { $gte: minPrice, $lte: maxPrice } }, { 'productOverallMaxPrice': { $gte: minPrice, $lte: maxPrice } }]
                 }
             ).skip(skip).limit(limit).sort([[priceSortMethod, priceSort]])
@@ -53,22 +56,127 @@ router.post('/search', async (req, res) => {
         if (sortingMethod == 1) {
             data = await Product.find(
                 {
-                    'productName': { $regex: item, $options: 'i' },
+                    $or: [{ 'productName': { $regex: item, $options: 'i' } }, { 'productKeywords': { $regex: item, $options: 'i' } }],
                     $or: [{ 'productOverallMinPrice': { $gte: minPrice, $lte: maxPrice } }, { 'productOverallMaxPrice': { $gte: minPrice, $lte: maxPrice } }]
                 }
             ).where('productParents.category').equals([filterCategory]).skip(skip).limit(limit)
         } else {
             data = await Product.find(
                 {
-                    'productName': { $regex: item, $options: 'i' },
+                    $or: [{ 'productName': { $regex: item, $options: 'i' } }, { 'productKeywords': { $regex: item, $options: 'i' } }],
                     $or: [{ 'productOverallMinPrice': { $gte: minPrice, $lte: maxPrice } }, { 'productOverallMaxPrice': { $gte: minPrice, $lte: maxPrice } }]
                 }
             ).skip(skip).where('productParents.category').equals([filterCategory]).limit(limit).sort([[priceSortMethod, priceSort]])
         }
     }
-    console.log(data.length)
     res.json({
         items: data
+    })
+})
+
+router.post('/addToSuggestionList', async (req, res) => {
+    let user = await User.findOne({ _id: req.body.userId })
+    let pId = req.body.product._id
+    let pName = req.body.product.productName
+    let pBrand = req.body.product.productBrand
+    let pPrice = req.body.product?.productOverallMaxPrice
+    let pParents = req.body.product?.productParents
+    let pKeywords = req.body.product?.productKeywords
+
+    // make new suggestion
+    let newSuggestion = {
+        pId,
+        pName,
+        pBrand,
+        pPrice,
+        pParents,
+        pKeywords,
+    }
+    // add new suggestion to db
+    if (user.suggestProducts) {
+        let notPresent = true
+        user.suggestProducts.map((suggestItem, index) => {
+            if (index <= 5) {
+                if (suggestItem.pId == pId) {
+                    user.suggestProducts[index] = newSuggestion
+                    notPresent = false
+                }
+            }
+        })
+        notPresent ?
+            user.suggestProducts = [newSuggestion, ...user.suggestProducts] :
+            null
+    } else {
+        user.suggestProducts = [newSuggestion]
+    }
+    if (user.suggestProducts.length > 5) {
+        user.suggestProducts.pop()
+    }
+    await user.save()
+    res.json({
+        message: "suggest Added Successfully"
+    })
+})
+
+router.post('/getSuggestProducts', async (req, res) => {
+    let user = await User.findOne({ _id: req.body.userId })
+    let Suggestions = user.suggestProducts
+    var finalProducts = []
+    let selectedIds = []
+
+    var newSuggestions = Suggestions
+    for (let i = 0; i < Suggestions.length; i++) {
+        var productId = Suggestions[i].pId
+        let yes = await Product.findOne({ _id: productId })
+        if (!yes) {
+            newSuggestions.splice(i, 1)
+        }
+    }
+    Suggestions = newSuggestions
+    user.suggestProducts = Suggestions
+    await user.save()
+
+    for (let i = 0; i < Suggestions.length; i++) {
+        if (i < 5) {
+            var suggest = Suggestions[i]
+
+            // price management
+            let thisPrice = suggest.pPrice
+            let range = thisPrice <= 1000 ? thisPrice / 2 : thisPrice / 1.5
+            let minPrice = (thisPrice - range) >= 0 ? (thisPrice - range) : 0
+            let maxPrice = thisPrice + range
+
+            // keyword spliting
+            let keywords = []
+            if (suggest.pKeywords) { keywords = suggest.pKeywords.split(',') }
+            let kRegex = keywords.join('|')
+
+            let _IDS = [suggest.pId].concat(selectedIds)
+
+            let data = await Product.find(
+                    { 
+                        '_id': { $nin: _IDS },
+                        'productKeywords': { $regex: kRegex, $options: "i" },
+                        'productBrand': { $regex: suggest.pBrand, $options: "i" },
+                        $or: [
+                            { 'productOverallMinPrice': { $gte: minPrice, $lte: maxPrice } },
+                            { 'productOverallMaxPrice': { $gte: minPrice, $lte: maxPrice } }
+                        ] 
+                    }
+                    )
+                .where('productParents.subCategory').equals([suggest.pParents.subCategory])
+                // .where('productBrand').equals([suggest.pBrand])
+                .limit(3)
+                
+            data.map(d => {
+                selectedIds.push(d._id)
+                finalProducts.push(d)
+            })
+        }
+    }
+
+    res.json({
+        items: finalProducts
     })
 })
 

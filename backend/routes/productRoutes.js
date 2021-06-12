@@ -17,6 +17,7 @@ cloudinary.config({
 // Load models
 const Product = require('../models/productModel');
 const Attribute = require('../models/attributeModel');
+const User = require('../models/userModel');
 const RawData = require('../models/rawDataModel');
 const General = require('../models/generalModel');
 
@@ -145,7 +146,6 @@ router.post('/insertProductVarient/', async (req, res) => {
 })
 
 // @ get Product varients
-
 router.post('/getProduct/', async (req, res) => {
   const adr = req.url
   const q = url.parse(adr, true)
@@ -227,7 +227,6 @@ router.post('/deleteVarImage/', async (req, res) => {
   var myProduct = await Product.findOne({ _id: pId })
   myProduct.productVarients.map(async (varient) => {
     if (varient._id == varId) {
-
       let publicId = varient.general.images[imgId].split('/')[varient.general.images[imgId].split('/').length - 1].split('.')[0]
       console.log(publicId)
       let data = await cloudinary.uploader.destroy(publicId, { type: 'upload' });
@@ -244,7 +243,6 @@ router.post('/deleteVarImage/', async (req, res) => {
     }
   })
 })
-
 
 router.post('/deleteVar/', async (req, res) => {
   const { pId, varId, indexx } = req.body
@@ -404,9 +402,12 @@ router.post('/product/get/category', async (req, res) => {
 router.post('/product/get/categoryAndSubCategory', async (req, res) => {
   let catId = req.body.category._id
   let subCatId = req.body.subCategory._id
-  console.log(catId)
-  console.log(subCatId)
-  let myProducts = await Product.find({ "productParents.category": catId, "productParents.subCategory": subCatId })
+
+  let count = req.body.count
+  let limit = req.body.limit
+  let skip = count * limit - limit
+
+  let myProducts = await Product.find({ "productParents.category": catId, "productParents.subCategory": subCatId }).skip(skip).limit(limit)
   res.json({ myProducts })
 
 })
@@ -431,7 +432,7 @@ router.post('/updateProduct', async (req, res) => {
 
 
 // @ with id
-router.post('/getProductWithId', async (req, res) => {
+router.post('/getProductWithID', async (req, res) => {
   let id = req.body.id
   let myProduct = await Product.findOne({ _id: id })
   if (myProduct) {
@@ -505,6 +506,26 @@ router.post('/setAttributes/', async (req, res) => {
   })
 })
 
+// @ set selected varients
+router.post('/setSelectedVarients/', async (req, res) => {
+  const { pId, selectedVarients } = req.body
+  let myProduct = await Product.findOne({ _id: pId })
+  myProduct.selectedVarients = selectedVarients
+  await myProduct.save()
+  res.json({
+    message: 'saved successfully'
+  })
+})
+
+// @ get selected varients
+router.post('/getSelectedVarients/', async (req, res) => {
+  const { pId } = req.body
+  let myProduct = await Product.findOne({ _id: pId })
+  res.json({
+    selectedVarients: myProduct.selectedVarients
+  })
+})
+
 // @ delete 
 router.post('/deleteAttribute/', async (req, res) => {
   let myAttributes = await Attribute.findOne({ _id: req.body.id })
@@ -555,7 +576,6 @@ router.post('/insertCategory/', async (req, res) => {
   var indexing = 0
   if (myRawData != null) {
     // let newCatId = myRawData.categories.length + 1
-    indexing = myRawData.categories[0].categoryIndex
     myRawData.categories.map(cat => (
       cat.categoryIndex > indexing ? indexing = cat.categoryIndex : null
     ))
@@ -786,9 +806,86 @@ router.post('/setQty/', async (req, res) => {
 
 // @ delete 
 router.post('/deleteProduct/', async (req, res) => {
+
+  // p_id and pt
+  var myProduct = await Product.findOne({
+    _id: req.body.id
+  })
+
+  if (myProduct.CoverImages.length >= 1) {
+    let publicId = myProduct.CoverImages[0].split('/')[myProduct.CoverImages[0].split('/').length - 1].split('.')[0]
+    await cloudinary.uploader.destroy(publicId, { type: 'upload' });
+  }
+
+  myProduct.productVarients.map(async (varient) => {
+    varient.general.images.map(async (imgg) => {
+      let publicId = imgg.split('/')[imgg.split('/').length - 1].split('.')[0]
+      await cloudinary.uploader.destroy(publicId, { type: 'upload' });
+    })
+  })
+
+  for (let j = 0; j < myProduct.productVarients.length; j++) {
+    for (let i = 0; i < myProduct.productVarients[j].varienteAttributes.length; i++) {
+      var mAtr = await Attribute.findOne({ _id: myProduct.productVarients[j].varienteAttributes[i].attr_id })
+      var myIndex = -1;
+      mAtr.values.map((val, index) => (
+        val == myProduct.productVarients[j].varienteAttributes[i].value ? (
+          myIndex = index
+        ) : null
+      ))
+      if (myIndex != -1) {
+        let d = mAtr.numProduct
+        d[myIndex].splice(myIndex, 1)
+        mAtr.numProduct = d
+      }
+      //  markModified .... 
+      mAtr.markModified('numProduct')
+      var data = await mAtr.save()
+    }
+  }
+
   await Product.findByIdAndRemove({ _id: req.body.id })
   res.json({
     message: 'Product deleted successfully',
+  })
+})
+
+
+router.post('/deleteCategory', async (req, res) => {
+  let catIndex = req.body.index
+  let catId = req.body.catId
+
+  let myRawData = await RawData.findOne({ _id: 1 })
+  myRawData.categories[catIndex]._id == catId ? (
+    myRawData.categories.splice(catIndex, 1)
+  ) : null
+
+  let sCat = myRawData.subCategories
+  sCat.map((sc, i) => {
+    sc.subCategoryParent == catId ? myRawData.subCategories.splice(i, 1) : null
+  })
+  await myRawData.save()
+  await Product.deleteMany({ "productParents.category": catId })
+  await User.findOne({})
+
+  res.json({
+    message: "success"
+  })
+})
+
+router.post('/deleteSubCategory', async (req, res) => {
+  let subCatIndex = req.body.index
+  let subCatId = req.body.subCatId
+
+  let myRawData = await RawData.findOne({ _id: 1 })
+  myRawData.subCategories[subCatIndex]._id == subCatId ? (
+    myRawData.subCategories.splice(subCatIndex, 1)
+  ) : null
+
+  await myRawData.save()
+  await Product.deleteMany({ "productParents.subCategory": subCatId })
+  res.json({
+    message: "success"
   })
 })
 

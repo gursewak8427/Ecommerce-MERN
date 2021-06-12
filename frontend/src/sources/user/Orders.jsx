@@ -1,31 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { Redirect, Link, useHistory } from 'react-router-dom'
-import { authenticateUser, isAuthUser } from '../../helpers/auth'
 import { useStateValue } from '../../StateProvider/StateProvider';
 import axios from 'axios'
 import './Orders.css'
+import { BottomScrollListener } from 'react-bottom-scroll-listener';
 import { KEYS } from '../keys'
 
 const Orders = () => {
     let history = useHistory();
     const [store, dispatch] = useStateValue();
-    const [myOrder, setMyOrder] = useState([])
+    const [myOrder, setMyOrder] = useState([]);
+    const [count, setCount] = useState(1);
+    const [empty, setEmpty] = useState(false);
+
+    const bottomHit = () => {
+        if (!empty) {
+            setCount(count + 1)
+        }
+    }
 
     useEffect(() => {
-        window.scroll(0,0)
         dispatch({
             type: 'SET_LOADING'
         })
-        var user = isAuthUser()
-        if (user) {
-            dispatch({
-                type: 'LOGIN_USER',
-                data: user
-            })
-            axios.post(`${KEYS.NODE_URL}/api/user/order/156/get`, { userId: user.id }).then(result => {
+        var user = store.user 
+    if (user!='') {
+            axios.post(`${KEYS.NODE_URL}/api/user/order/156/get`, { userId: user.id, count }).then(result => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
+                if (result.data.orders.length == 0) {
+                    setEmpty(true)
+                    return
+                }
+                var d = []
+                if (count != 1) {
+                    d = store.orders
+                }
+                d = d.concat(result.data.orders)
                 dispatch({
                     type: 'SET_ORDERS',
-                    orders: result.data.orders
+                    orders: d
                 })
             }).catch(err => console.log(err))
         } else {
@@ -34,18 +49,20 @@ const Orders = () => {
                 type: 'UNSET_LOADING'
             })
         }
+    }, [count])
 
+    useEffect(() => {
+        window.scroll(0, 0)
         if (store.rawdata.length == 0) {
             axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getRawData`)
                 .then(result => {
                     sorting(result.data.myRawData.categories, result.data.myRawData.subCategories)
                 }).catch(err => console.log(err))
-        }else{
+        } else {
             dispatch({
                 type: 'UNSET_LOADING'
             })
         }
-
     }, [])
 
 
@@ -115,13 +132,23 @@ const Orders = () => {
     const goToProduct = id => {
         history.push(`/item/info/${id}`);
     }
-
+    const viewBill = (index, orderId) => {
+        if (store.orders[index].orderId == orderId) {
+            dispatch({
+                type: 'CURRENT_INVOICE',
+                order: ['00', store.orders[index]]
+            })
+            history.push('/orders/bill')
+        } else {
+            alert('something Wrong')
+        }
+    }
     return (
         <>
-            <div className="wrapper">
+            <div className="wrapper mt-10">
                 <div className="orders">
                     {
-                        !isAuthUser() ?
+                        store.user == '' ?
                             <div className="loginFirst">
                                 <img src="https://borlabs.io/wp-content/uploads/2019/09/blog-wp-login.png" alt="" />
                                 <span className='a'>Please Signin/ Signup</span>
@@ -142,25 +169,43 @@ const Orders = () => {
                                                 store.orders.map((order, index) => (
                                                     <div key={index} className={`order ordr${order.orderId}`}>
                                                         <div className="top">
-                                                            <span>{order.orderTime}</span>
+                                                            <span>{order.orderTime[0]}</span>
                                                             <span className='status' onClick={() => seeDetail(index, order.orderId)}>{
-                                                                order.orderStatus == 1 ? <span className="a">Pending</span> :
+                                                                order.orderStatus == 1 ? <span className="a">Ordered</span> :
                                                                     order.orderStatus == 2 ? <span className="b">Processing</span> :
                                                                         order.orderStatus == 3 ? <span className="c">Shipping</span> :
                                                                             order.orderStatus == 4 ? <span className="d">Delivered</span> :
                                                                                 order.orderStatus == 5 ? <span className="e">Canceled</span> : null
-                                                            }</span>
+                                                            }
+                                                            </span>
+                                                        </div>
+                                                        <div className="dtl">
+                                                            {
+                                                                 order.orderStatus == 4 ? 
+                                                                    <span onClick={()=>viewBill(index, order.orderId)} className='getBill'>
+                                                                        &nbsp;Bill
+                                                                    </span> : null
+                                                            }
+                                                            <span>
+                                                                <span style={{ marginBottom: 0 }}>Order Id :</span>
+                                                                <span>{order.orderId}</span>
+                                                            </span>
+                                                            <span>
+                                                                <span style={{ marginBottom: 0 }}>Transition Id :</span>
+                                                                <span>{order.orderPayment.paymentDetail.TransitionId}</span>
+                                                            </span>
                                                         </div>
                                                         <div className="items">
-                                                            {order.items.map((item, itemIndex) => (
+                                                            {order?.items?.map((item, itemIndex) => (
                                                                 item.productType == 0 ? (
                                                                     <div key={order.orderId + item.id + itemIndex} onClick={() => goToProduct(item.id)} className="item">
                                                                         <div className="left">
                                                                             <img src={item.coverImg} alt="" />
                                                                         </div>
                                                                         <div className="contentF">
-                                                                            <span className='name'>{item.name}</span>
-                                                                            <span>Price: {item.price.price} ₹</span>
+                                                                            <span>{item.name}</span>
+                                                                            <span><b>Qty:</b> {item.itemQty}</span>
+                                                                            <span><b>Price:</b> {item.price.price} ₹</span>
                                                                         </div>
                                                                     </div>
                                                                 ) : item.productType == 1 ? (
@@ -169,10 +214,11 @@ const Orders = () => {
                                                                             <img src={item.varient.general.images.length != 0 ? item.varient.general.images[0] : item.coverImg} alt="" />
                                                                         </div>
                                                                         <div className="contentF">
-                                                                            <span className='name'>{item.name}
+                                                                            <span>{item.name}
                                                                                 <span className='attributes'>{item.varient.varienteAttributes.map((atr, index) => index == 0 && index + 1 == item.varient.varienteAttributes.length ? (<span key={order.orderId + itemIndex + atr.attr_id}>({atr.value})</span>) : index == 0 ? (<span key={order.orderId + itemIndex + atr.attr_id}>({atr.value},</span>) : index + 1 == item.varient.varienteAttributes.length ? (<span key={order.orderId + itemIndex + atr.attr_id}>{atr.value})</span>) : (<span key={order.orderId + itemIndex + atr.attr_id}>{atr.value},</span>))} </span>
                                                                             </span>
-                                                                            <span>Price: {item.varient.general.price} ₹</span>
+                                                                            <span><b>Qty:</b> {item.itemQty}</span>
+                                                                            <span><b>Price:</b> {item.varient.general.price} ₹</span>
                                                                         </div>
                                                                     </div>
                                                                 ) : null
@@ -181,6 +227,9 @@ const Orders = () => {
                                                     </div>
                                                 ))
                                             )
+                                        }
+                                        {
+                                            empty && count != 1 ? <div>No More</div> : null
                                         }
                                     </div>
                                     <div className="right orderDetail">
@@ -192,24 +241,40 @@ const Orders = () => {
                                                 ) : (
                                                     <>
                                                         {
+                                                            console.log(store.orders)
+                                                        }
+                                                        {
                                                             store.orders[myOrder[0]].orderId == myOrder[1] && store.orders[myOrder[0]].orderStatus != 5 ? (
                                                                 <>
-                                                                    <span style={{ marginBottom: 0 }}>Order Id:</span>
-                                                                    <span><span>{store.orders[myOrder[0]].orderId}</span></span>
                                                                     <div className="contentd">
                                                                         <div className={`line ${store.orders[myOrder[0]].orderStatus == 1 ? 'one' : store.orders[myOrder[0]].orderStatus == 2 ? 'two' : store.orders[myOrder[0]].orderStatus == 3 ? 'three' : store.orders[myOrder[0]].orderStatus == 4 ? 'four' : ''}`}><span></span></div>
                                                                         <div className="data">
-                                                                            <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 1 ? 'active-1 now' : ''}`}>Ordered</li>
-                                                                            <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 2 ? 'active-2 now' : ''}`}>Processing</li>
-                                                                            <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 3 ? 'active-3 now' : ''}`}>Shiping</li>
-                                                                            <li className={`${store.orders[myOrder[0]].orderStatus >= 4 ? 'active-4 now' : ''}`}>Delivered</li>
+                                                                            <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 1 ? 'active-1 now' : ''}`}>
+                                                                                Ordered
+                                                                                <span>{store.orders[myOrder[0]].orderTime[0]}</span>
+                                                                            </li>
+                                                                            <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 2 ? 'active-2 now' : ''}`}>
+                                                                                Processing
+                                                                                <span>{store.orders[myOrder[0]].orderTime[1]}</span>
+                                                                            </li>
+                                                                            <li className={`mb-80 ${store.orders[myOrder[0]].orderStatus >= 3 ? 'active-3 now' : ''}`}>
+                                                                                Shiping
+                                                                                <span>{store.orders[myOrder[0]].orderTime[2]}</span>
+                                                                            </li>
+                                                                            <li className={`${store.orders[myOrder[0]].orderStatus >= 4 ? 'active-4 now' : ''}`}>
+                                                                                Delivered
+                                                                                <span>{store.orders[myOrder[0]].orderTime[3]}</span>
+                                                                            </li>
                                                                         </div>
                                                                     </div>
                                                                 </>
                                                             ) :
-                                                                store.orders[myOrder[0]].orderStatus == 5 ? (
-                                                                    <h4>Your order is canceled.</h4>
-                                                                ) : null
+                                                                store.orders[myOrder[0]].orderStatus == 5 ?
+                                                                    <>
+                                                                        <h4>Your order is canceled.</h4>
+                                                                        <span>{store.orders[myOrder[0]].orderTime[4]}</span>
+                                                                    </>
+                                                                    : null
                                                         }
 
                                                     </>
@@ -222,6 +287,7 @@ const Orders = () => {
                     }
 
                 </div>
+                <BottomScrollListener onBottom={bottomHit} />
             </div>
         </>
     );

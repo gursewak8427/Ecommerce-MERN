@@ -3,7 +3,7 @@ import { useHistory } from "react-router-dom";
 import axios from 'axios'
 import { useStateValue } from '../../StateProvider/StateProvider';
 import { KEYS } from '../keys'
-import { authenticateUser, isAuthUser, setLocalStorage } from '../../helpers/auth'
+import { isAuthUser, setLocalStorage } from '../../helpers/auth'
 import { ToastContainer, toast } from 'react-toastify';
 
 import './Profile.css'
@@ -13,20 +13,18 @@ const Profile = (props) => {
     const [store, dispatch] = useStateValue();
     const [state, setState] = useState({
         profileName: '',
+        profileNum: '',
         cPass: '',
         pass1: '',
         pass2: '',
     })
     useEffect(() => {
-        var user = isAuthUser()
-        if (user) {
-            dispatch({
-                type: 'LOGIN_USER',
-                data: user
-            })
+        var user = store.user
+        if (user != '') {
             setState({
                 ...state,
-                profileName: user.name
+                profileName: user.name,
+                profileNum: user.phone
             })
         } else {
             document.getElementById('signup').classList.add('open')
@@ -44,8 +42,6 @@ const Profile = (props) => {
         axios.post(`${KEYS.NODE_URL}/api/user/auth/156/updateProfile/general`, data).then(result => {
             let user = store.user
             user.name = state.profileName
-            dispatch({ type: 'LOGIN_USER', data: user })
-            setLocalStorage('user-client', user)
             toast.info('Update Successfully')
         }).catch(err => console.log(err))
     }
@@ -63,7 +59,7 @@ const Profile = (props) => {
         }).catch(err => {
             if (err?.response?.data?.error) {
                 toast.error(err?.response?.data?.error)
-            }else{
+            } else {
                 console.log(err)
             }
         })
@@ -75,7 +71,7 @@ const Profile = (props) => {
                 <ToastContainer />
                 <div className="userProfile">
                     {
-                        !isAuthUser() ?
+                        store.user == '' ?
                             <div className="loginFirst">
                                 <img src="https://borlabs.io/wp-content/uploads/2019/09/blog-wp-login.png" alt="" />
                                 <span className='a'>Please Signin/ Signup</span>
@@ -94,6 +90,10 @@ const Profile = (props) => {
                                                 <div className="form-area">
                                                     <label htmlFor="">Your Name</label>
                                                     <input type="text" value={state.profileName} name={'profileName'} onChange={onChange} />
+                                                </div>
+                                                <div className="form-area">
+                                                    <label htmlFor="">Your Number</label>
+                                                    <input type="text" value={state.profileNum} style={{background: '#c2b3b2', cursor: 'not-allowed'}} readOnly/>
                                                 </div>
                                                 <button className="update" onClick={updateProfile}>Update</button>
                                             </div>

@@ -10,6 +10,19 @@
     padding-top: 10px;
     margin: 0 auto;
 }
+.item.itemRemovedProcess-a{
+    opacity: 0;
+    transform: rotateY(-90deg);
+    transition: all 0.5s cubic-bezier(.36,-1,.34,2.76);
+}
+.item.itemRemovedProcess-b{
+    opacity: 0;
+    transform: rotateY(-90deg);
+    transition: all 0.5s cubic-bezier(.36,-1,.34,2.76);
+}
+.item.itemRemovedSuccess{
+    display: none !important;
+}
 .cart .left{
     width: 70%;
     padding: 20px;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import './Signup.css'
-import { authenticateUser, isAuthUser } from '../../../helpers/auth'
+import { authenticateUser } from '../../../helpers/auth'
 import { useStateValue } from '../../../StateProvider/StateProvider';
 
 import firebase from "../firebase/firebase-config.js";
@@ -23,6 +23,7 @@ const Signup = (props) => {
     const [fcode, setFCode] = useState('');
     const [fpass1, setFPass1] = useState('');
     const [fpass2, setFPass2] = useState('');
+    const [countNotify, setCountNotify] = useState(1)
     const [captcha, setCaptcha] = useState(false);
 
 
@@ -54,38 +55,51 @@ const Signup = (props) => {
 
 
     const onSignInSubmit = (e) => {
-        var ii = document.getElementsByClassName('r1')
-        for (let i = 0; i < ii.length; i++) {
-            ii[i].style.display = "none"
-        }
-        setUpRecaptcha();
-        setCaptcha(true)
-        var phoneNumber = "+91" + number;
-        let appVerifier = window.recaptchaVerifier
-        firebase
-            .auth()
-            .signInWithPhoneNumber(phoneNumber, appVerifier)
-            .then(function (confirmationResult) {
-                window.confirmationResult = confirmationResult;
-                window.recaptchaVerifier.clear()
-                setCaptcha(false)
+        // check number
+        axios.post(`${KEYS.NODE_URL}/api/user/auth/156/userCheck`, { number })
+            .then(result => {
                 var ii = document.getElementsByClassName('r1')
                 for (let i = 0; i < ii.length; i++) {
-                    ii[i].style.display = "block"
+                    ii[i].style.display = "none"
                 }
-                toast.info('OTP send to ' + number)
-                toggleFields()
+                setUpRecaptcha();
+                setCaptcha(true)
+                var phoneNumber = "+91" + number;
+                let appVerifier = window.recaptchaVerifier
+                firebase
+                    .auth()
+                    .signInWithPhoneNumber(phoneNumber, appVerifier)
+                    .then(function (confirmationResult) {
+                        window.confirmationResult = confirmationResult;
+                        window.recaptchaVerifier.clear()
+                        setCaptcha(false)
+                        var ii = document.getElementsByClassName('r1')
+                        for (let i = 0; i < ii.length; i++) {
+                            ii[i].style.display = "block"
+                        }
+                        toast.info('OTP send to ' + number)
+                        toggleFields()
+                    })
+                    .catch(function (error) {
+                        var ii = document.getElementsByClassName('r1')
+                        for (let i = 0; i < ii.length; i++) {
+                            ii[i].style.display = "block"
+                        }
+                        window.recaptchaVerifier.clear()
+                        setCaptcha(false)
+                        console.log(error);
+                        toast.error('Something Went Wrong')
+                    });
             })
-            .catch(function (error) {
-                var ii = document.getElementsByClassName('r1')
-                for (let i = 0; i < ii.length; i++) {
-                    ii[i].style.display = "block"
+            .catch(err => {
+                if (err?.response?.data?.error) {
+                    toast.error(err?.response?.data?.error)
+                } else {
+                    console.log(err)
                 }
-                window.recaptchaVerifier.clear()
-                setCaptcha(false)
-                console.log(error);
-                toast.error('Something Went Wrong')
-            });
+            })
+
+
     };
     // login end
 
@@ -209,7 +223,7 @@ const Signup = (props) => {
     }
     const setPassword = () => {
         let data = { name, number, password: pass1 }
-
+        document.getElementById('shortLoading').style.display = 'block'
         axios.post(`${KEYS.NODE_URL}/api/user/auth/156/userSignup`, data)
             .then(result => {
                 authenticateUser(result, () => {
@@ -218,11 +232,8 @@ const Signup = (props) => {
                     setPass1('')
                     setPass2('')
                 })
-                dispatch({
-                    type: 'LOGIN_USER',
-                    data: result.data.user
-                })
                 toast.success(name + ', Registeration Complete')
+                document.getElementById('shortLoading').style.display = 'none'
                 // close signup form
                 close();
             })
@@ -232,6 +243,7 @@ const Signup = (props) => {
                 } else {
                     console.log(err)
                 }
+                document.getElementById('shortLoading').style.display = 'none'
             })
 
     }
@@ -289,9 +301,11 @@ const Signup = (props) => {
             toast.error('Passwords must be same')
             return
         }
+        document.getElementById('shortLoading').style.display = 'block'
         let data = { number: fnumber, newPassword: fpass1 }
         axios.post(`${KEYS.NODE_URL}/api/user/auth/156/userForget`, data)
             .then(result => {
+                document.getElementById('shortLoading').style.display = 'none'
                 toast.success('Password Changed Successfully, Now Login')
                 close()
                 openLoginBox()
@@ -302,40 +316,90 @@ const Signup = (props) => {
                 } else {
                     console.log(err)
                 }
+                document.getElementById('shortLoading').style.display = 'none'
             })
+    }
+    const cartBtnAnimation = () => {
+        // animation on cartBoxBtn
+        document.getElementsByClassName('cartBox')[0].classList.add('animate')
 
-
+        setTimeout(function () {
+            document.getElementsByClassName('cartBox')[0].classList.remove('animate')
+        }, 2000);
+        // ===================
     }
     const now_login = () => {
         let data = {
             phone: loginNum,
             password: loginPass,
         }
+        document.getElementById('shortLoading').style.display = 'block'
         axios.post(`${KEYS.NODE_URL}/api/user/auth/156/userSignin`, data).then(result => {
             toast.success('Login Successfully')
             authenticateUser(result, () => {
                 setLoginNum('')
                 setLoginPass('')
             })
-            dispatch({ type: 'LOGIN_USER', data: result.data.user })
+            dispatch({ type: 'SET_USER', data: result.data.user })
             axios.post(`${KEYS.NODE_URL}/api/user/cart/156/get`, { userId: result.data.user.id }).then(results => {
                 dispatch({ type: 'SET_CART', items: results.data.cart })
+                if (store.cart_pending != '') {
+                    var item = store.cart_pending
+                    let stat = true
+                    results.data.cart.map(i => i.id == item.item.id ? stat = false : null)
+                    console.log('stat', stat)
+                    if (!stat) {
+                        toast.error('Item Already in Cart')
+                        document.getElementById('shortLoading').style.display = 'none'
+                        return
+                    }
+                    item.userId = result.data.user.id
+                    axios.post(`${KEYS.NODE_URL}/api/user/cart/156/add`, item).then(result => {
+                        dispatch({ type: 'ADD_TO_CART', item })
+                        toast.info('Added To Cart')
+                        cartBtnAnimation()
+                    }).catch(err => toast.error('Something Wrong'))
+                }
+
+                // get New Notifications
+                axios.post(`${KEYS.NODE_URL}/api/user/order/156/getNewNotify`, { userId: result.data.user.id })
+                    .then(result => {
+                        dispatch({
+                            type: 'SET_NEWNOTIFY',
+                            number: result.data.newNotify
+                        })
+                    })
+                    .catch(err => {
+                        console.log(err)
+                    })
+
+                // notify
+                axios.post(`${KEYS.NODE_URL}/api/user/order/156/getNotify`, { userId: result.data.user.id, count: countNotify })
+                    .then(result => {
+                        if (result.data.notify.length == 0) {
+                        } else {
+                            let a = store.notifyList
+                            a = a.concat(result.data.notify)
+                            dispatch({
+                                type: 'SET_NOTIFY',
+                                notifyList: a
+                            })
+                        }
+                    })
+                    .catch(err => {
+                        console.log(err.response.data.error)
+                    })
+                // order
                 axios.post(`${KEYS.NODE_URL}/api/user/order/156/get`, { userId: result.data.user.id }).then(resultsss => {
+                    document.getElementById('shortLoading').style.display = 'none'
                     dispatch({ type: 'SET_ORDERS', orders: resultsss.data.orders })
                 }).catch(err => console.log(err.response.data.error))
-            }).catch(err => console.log(err.response.data.error))
+            }).catch(err => console.log(err))
 
-            if (store.cart_pending != '') {
-                var item = store.cart_pending
-                item.userId = result.data.user.id
-                axios.post(`${KEYS.NODE_URL}/api/user/cart/156/add`, item).then(result => {
-                    dispatch({ type: 'ADD_TO_CART', item })
-                    toast.info('Added To Cart')
-                }).catch(err => toast.error('Something Wrong'))
-            }
             // close signup form
             close();
         }).catch(err => {
+            document.getElementById('shortLoading').style.display = 'none'
             if (err?.response?.data?.error) {
                 toast.error(err?.response?.data?.error)
             } else {
@@ -381,11 +445,11 @@ const Signup = (props) => {
                     </div>
                     <div className="form-field">
                         <label htmlFor="">Enter Password</label>
-                        <input type="text" value={pass1} onChange={(e) => setPass1(e.target.value)} />
+                        <input type="password" value={pass1} onChange={(e) => setPass1(e.target.value)} />
                     </div>
                     <div className="form-field">
                         <label htmlFor="">Enter Confirm Password</label>
-                        <input type="text" value={pass2} onChange={(e) => setPass2(e.target.value)} />
+                        <input type="password" value={pass2} onChange={(e) => setPass2(e.target.value)} />
                     </div>
                     <div className="form-field">
                         <button type="button" onClick={setPassword} >Set</button>
@@ -404,7 +468,7 @@ const Signup = (props) => {
                     </div>
                     <div className="form-field">
                         <label htmlFor="">Enter Your Password</label>
-                        <input type="text" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} />
+                        <input type="password" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} />
                     </div>
                     <div className="form-field">
                         <span className='ff' onClick={openForgotBox}>Forgot password</span>
@@ -446,11 +510,11 @@ const Signup = (props) => {
                     <label htmlFor="">Set New Password</label>
                     <div className="form-field">
                         <label htmlFor="">Enter New Password</label>
-                        <input type="text" value={fpass1} onChange={(e) => setFPass1(e.target.value)} />
+                        <input type="password" value={fpass1} onChange={(e) => setFPass1(e.target.value)} />
                     </div>
                     <div className="form-field">
                         <label htmlFor="">Enter Confirm Password</label>
-                        <input type="text" value={fpass2} onChange={(e) => setFPass2(e.target.value)} />
+                        <input type="password" value={fpass2} onChange={(e) => setFPass2(e.target.value)} />
                     </div>
                     <div className="form-field">
                         <button type="button" onClick={setNewPassword} >Set</button>

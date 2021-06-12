@@ -95,11 +95,17 @@
     width: auto;
     cursor: pointer;
 }
-.divError{
-    width: 90%;
+.divError {
+    width: 45%;
+    max-height: 500px;
     display: flex;
     flex-direction: column;
-    position: relative;
+    position: fixed;
+    z-index: 999999;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    box-shadow: 0 0 20px 0px black;
 }
 .divError span{
     width: 100%;
@@ -108,13 +114,14 @@
 }
 
 .divError .crs{
-    width: 20px;
-    height: 20px;
+    width: 30px;
+    height: 30px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     background: red;
+    font-weight: bolder;
     color: white;
     position: absolute;
     top: 0;
@@ -138,7 +145,28 @@
 .attribute-content .right .attr-list > span:nth-of-type(2) span:nth-of-type(1){
     padding-right: 20px;
 }
-
+.attribute-content .right .attr-list > span:nth-of-type(2) span:nth-of-type(1) span{
+    position: relative;
+    margin-right: 5px !important;
+}
+.attribute-content .right .attr-list > span:nth-of-type(2) span:nth-of-type(1) span:hover .crooss{
+    display: block;
+}
+.attribute-content .right .attr-list > span:nth-of-type(2) span:nth-of-type(1) span .crooss{
+    position: absolute;
+    background: red;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    padding-top: 2px;
+    font-size: 70%;
+    border-radius: 5px;
+    display: none;
+}
 .attribute-content .right .attr-list > span:nth-of-type(1) > span:nth-of-type(2){
     color: red;
     cursor: pointer;
@@ -156,3 +184,37 @@
     color: rgb(9, 179, 108);
 }
 
+@media screen and (max-width: 650px) {
+    .attribute-content{
+        flex-direction: column;
+    }
+    .attribute-content .left,
+    .attribute-content .right{
+        width: 100%;
+    }
+    .attribute-content .right .attr-list > span:nth-of-type(2){
+        display: flex;
+        flex-direction: column;
+    }
+    .attribute-content .right .attr-list > span:nth-of-type(2) span{
+        width: 100%;
+        margin: 2px;
+    }
+    .attribute-content .right .attr-list > span:nth-of-type(2) > span:nth-of-type(1){
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .attribute-content .right .attr-list > span:nth-of-type(2) > span:nth-of-type(1) span{
+        width: auto;
+    }
+    .attribute-content .right .attr-list > span:nth-of-type(2) > span:nth-of-type(2){
+        text-align: right;
+    }
+    .newPush{
+        width: 90%;
+        height: 60vh;
+    }
+
+
+}

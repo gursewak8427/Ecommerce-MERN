@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Redirect, useParams } from 'react-router-dom'
 import axios from 'axios'
-import { authenticate, isAuth } from '../../helpers/auth'
+import { getTokenAdmin } from '../../helpers/auth'
 import './VProduct.css'
 
 import VProTimeLine from './common/VProTimeLine'
@@ -23,15 +23,30 @@ function VProduct() {
     })
     const { id } = useParams()
     useEffect(() => {
+        setTimeout(()=>{
+            document.getElementsByClassName('product-content')[0].classList.remove('animate')
+        }, 500)
         if (id) {
-            axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getRawData`)
+            axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getRawData`,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            })
                 .then(resultRawData => {
                     state.catList = []
                     state.subCatList = []
                     state.catList = resultRawData.data.myRawData.categories
                     state.subCatList = resultRawData.data.myRawData.subCategories
 
-                    axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getProductWithID`, { id })
+                    axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getProductWithID`, { id },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `barear ${getTokenAdmin()}`
+                          }
+                    })
                         .then(result => {
                             if (!result.data.myCollection) {
                                 setState({
@@ -76,7 +91,6 @@ function VProduct() {
 
     return (
         <>
-            {!isAuth() ? <Redirect to='/vendor/login' /> : null}
             <div className="v-wrapper">
                 <div className="design"></div>
                 <div className="v-product">
@@ -84,7 +98,7 @@ function VProduct() {
                     {id ? null : (
                         <VProTimeLine stateChanger={setState} />
                     )}
-                    <div className="product-content">
+                    <div className="product-content animate">
                         {
                             state.task == '1' ? (
                                 <SelectCat stateChanger={setState} />

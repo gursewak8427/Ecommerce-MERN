@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Redirect, Link } from 'react-router-dom'
 import axios from 'axios'
-import { authenticate, isAuth } from '../../helpers/auth'
+import { authenticate, getTokenAdmin } from '../../helpers/auth'
 
 import './VLogin.css'
 import { KEYS } from '../keys';
@@ -21,7 +21,13 @@ function VLogin(props) {
             password: formState.password
         };
         axios
-        .post(`${KEYS.NODE_URL}/api/vendor/156/signin`, data)
+        .post(`${KEYS.NODE_URL}/api/vendor/156/signin`, data,
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
         .then(result => {
             authenticate(result, () => {
                 setFormState({ 
@@ -33,13 +39,13 @@ function VLogin(props) {
             })
         })
         .catch(err => {
+          alert(err.response.data.error)
           console.log("Error in Login : ", err.response.data.error);
         })
 
     }
     return (
         <>
-            {!isAuth() ? <Redirect to='/vendor/login' /> : null}
             <div className="v-login">
                 <div className="form">
                     <label htmlFor="">Login Here For <span>Style Factory</span></label>

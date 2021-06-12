@@ -27,5 +27,5 @@ app.use('/api/vendor/order/156', vendorOrderRoutes)
 app.use('/api/vendor/product/156', productRoutes)
 app.use('/api/vendor/general/156', generalRoute)
 
-const port = process.env.PORT || 8082;
+const port = process.env.PORT || 8084;
 app.listen(port, () => console.log(`Server running on port ${port}`));

@@ -37,3 +37,15 @@
     margin-right: 10px;
 }
 
+@media screen  and (max-width: 650px){
+    .v-login .form{
+        width: 90%;
+        height: 80vh;
+        text-align: center;
+    }
+    .v-login .form > label{
+        display: flex;
+        flex-direction: column;
+    }
+
+}

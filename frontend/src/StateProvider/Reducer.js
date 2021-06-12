@@ -1,5 +1,6 @@
 export const initialState = {
     user: '',
+    admin: '',
     rawdata: [],
     home_products: [],
     cart: [],
@@ -12,6 +13,10 @@ export const initialState = {
     sliderList: [],
     searchItem: '',
     loading: false,
+    navLoading: false,
+    currentInvoice: '',
+    notifyList: [],
+    newNotify: 0
 };
 
 const reducer = (store, action) => {
@@ -29,23 +34,71 @@ const reducer = (store, action) => {
                 loading: false
             }
 
-        case 'LOGIN_USER':
+        case 'SET_NEWNOTIFY':
+            return {
+                ...store,
+                newNotify: action.number
+            }
+
+        case 'SET_NAVLOADING':
+            return {
+                ...store,
+                navLoading: true
+            }
+
+        case 'UNSET_NAVLOADING':
+            return {
+                ...store,
+                navLoading: false
+            }
+
+        case 'SET_USER':
             return {
                 ...store,
                 user: action.data
+            }
+
+        case 'UNSET_USER':
+            return {
+                ...store,
+                user: '',
+                cart: [],
+                cartTotal: 0,
+                cart_pending: '',
+                orders: [],
+                currentOrder: [],
+            }
+
+        case 'SET_ADMIN':
+            return {
+                ...store,
+                user: action.data
+            }
+
+        case 'UNSET_ADMIN':
+            return {
+                ...store,
+                admin: '',
+            }
+
+        case 'CURRENT_INVOICE':
+            console.log(action.order)
+            return {
+                ...store,
+                currentInvoice: action.order
             }
 
         case 'ADD_TO_CART':
             {
                 var price = 0
                 if (action.item.productType == 0) {
-                    price = store.cartTotal + parseInt(action.item.price.price)
+                    price = store.cartTotal + parseFloat(action.item.price.price) * parseFloat(action.item.itemQty)
                 } else if (action.item.productType == 1) {
-                    price = store.cartTotal + parseInt(action.item.varient.general.price)
+                    price = store.cartTotal + parseFloat(action.item.varient.general.price) * parseFloat(action.item.itemQty)
                 }
                 return {
                     ...store,
-                    cart: [...store.cart, action.item],
+                    cart: [action.item, ...store.cart],
                     cartTotal: price
                 }
             }
@@ -56,9 +109,9 @@ const reducer = (store, action) => {
                 var price = 0
                 action.items.map(item => (
                     item.productType == 0 ?
-                        price += parseInt(item.price.price)
+                        price += parseFloat(item.price.price) * parseFloat(item.itemQty)
                         : item.productType == 1 ?
-                            price += parseInt(item.varient.general.price)
+                            price += parseFloat(item.varient.general.price) * parseFloat(item.itemQty)
                             : price += 0
                 ))
                 return {
@@ -81,10 +134,11 @@ const reducer = (store, action) => {
         case 'ADD_TO_ORDERS':
             return {
                 ...store,
-                orders: [...store.orders, action.cart]
+                orders: [action.cart, ...store.orders]
             }
 
         case 'SET_ORDERS':
+            console.log(action.orders)
             return {
                 ...store,
                 orders: action.orders
@@ -132,6 +186,14 @@ const reducer = (store, action) => {
                 ...store,
                 home_products: [...store.home_products, action.data.products]
             }
+
+
+        case 'SET_NOTIFY':
+            return {
+                ...store,
+                notifyList: action.notifyList
+            }
+
 
         default:
             return store

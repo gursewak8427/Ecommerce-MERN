@@ -9,21 +9,22 @@ const Subtotal = props => {
 
     const continueToOrder = () => {
         document.getElementById('chkBtn').disabled = true
-        const randomString = Math.random().toString(36).substring(2, 12);
+        const randomString = Math.random().toString(36).substring(2, 8);
         var nowTiming = new Date();
         let CorrectTime =
             nowTiming.toLocaleString("en-US", {
                 timeZone: "Asia/Kolkata"
             });
         // 1 = COD, 2 = UPI
+        console.log(store.orders.length)
         let order = {
             // order-id = userId + numberOfOrders + randomString
-            orderId: store.orders.length + store.user.id + randomString,
+            orderId: store.orders.length + "" + Date.now() + randomString,
             items: store.cart,
             orderStatus: 1,
             orderAmount: store.cartTotal,
             orderPayment: undefined,
-            orderTime: CorrectTime,
+            orderTime: [CorrectTime,'','','',''],
             orderAddress: []
         }
 
@@ -31,7 +32,6 @@ const Subtotal = props => {
         dispatch({ type: 'SET_CURRENT_ORDER', order: [order] })
         document.getElementById('chkBtn').disabled = false
         history.push(`payment/${order.orderId}`);
-
 
     }
 

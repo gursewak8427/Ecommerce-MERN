@@ -2,10 +2,9 @@ const router = require('express').Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const url = require('url');
-
+const UserAuth = require('../helpers/checkAuth')
 // Load models
 const User = require('../models/userModel');
-
 
 router.post('/userSignup', async (req, res) => {
     const { name, number, password } = req.body
@@ -71,6 +70,18 @@ router.post('/userForget', async (req, res) => {
 })
 
 
+router.post('/userCheck', async (req, res) => {
+    var user = await User.findOne({ phone: req.body.number })
+    if (user) {
+        res.status(400).json({
+            error: "This number is already exist. Please Login"
+        })
+    } else {
+        res.json({
+            message: "Successfull"
+        })
+    }
+})
 
 router.post('/userSignin', async (req, res) => {
     const { phone, password } = req.body
@@ -158,6 +169,54 @@ router.post('/updateProfile/security/updatePassword', async (req, res) => {
         })
     }
 })
+
+
+router.post('/ratingCheckProduct', async (req, res) => {
+    const { product, userId } = req.body
+    var user = await User.findOne({ _id: userId })
+    var myProduct = await Product.findOne({ _id: product._id })
+    var havee = false
+    user.orders.map(order => {
+        return order.orderStatus == 4 ? (
+            order.items.map(item => item.id == myProduct._id ? havee = true : null)
+        ) : null
+    })
+    if (havee) {
+        return res.json({
+            message: "Ok, You purchased this product."
+        })
+    } else {
+        return res.status(401).json({
+            error: "You havn't purchase this product."
+        })
+    }
+})
+
+router.post('/setRating', async (req, res) => {
+    const { product, userId, rating } = req.body
+    var myProduct = await Product.findOne({ _id: product._id })
+    myUser = await User.findOne({ _id: userId })
+    const newRating = {
+        userId: myUser.name,
+        rate: rating.rate,
+        review: rating.review
+    }
+    console.log(req.body, newRating)
+    myProduct.productReviews = [newRating, ...myProduct.productReviews]
+    myProduct.totalRate = myProduct.totalRate + parseFloat(rating.rate)
+    myProduct.save();
+    return res.json({
+        message: "Successfull"
+    })
+})
+
+
+router.post('/checkUserToken',UserAuth, async (req, res) => {
+    res.json({
+        user:req.userData
+    })
+})
+
 
 
 module.exports = router

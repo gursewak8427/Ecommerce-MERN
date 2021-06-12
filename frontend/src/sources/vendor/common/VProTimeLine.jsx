@@ -1,7 +1,6 @@
 import React from 'react';
 import { Redirect, Link } from 'react-router-dom'
 import axios from 'axios'
-import { authenticate, isAuth } from '../../../helpers/auth'
 
 import './VProTimeLine.css'
 
@@ -46,13 +45,13 @@ function VProTimeLine({ stateChanger, ...rest }) {
         <>
             <div className="product-time-line">
                 <div className="text">
-                    <span className='timeLine1 active' onClick={() => stateChange(1)}>Select Category
+                    <span className='timeLine1 active' onClick={() => stateChange(1)}> <i className="h">Select</i> Category
                         <span className='timeLine1 active'></span>
                     </span>
-                    <span className='timeLine2'>Select Sub-Category
+                    <span className='timeLine2'> <i className="h">Select</i> Sub-Category
                         <span className='timeLine2'></span>
                     </span>
-                    <span className='timeLine3'>Add Product
+                    <span className='timeLine3'> <i className="h">Add</i> Product
                         <span className='timeLine3'></span>
                     </span>
                     <span className='timeLine4'>General

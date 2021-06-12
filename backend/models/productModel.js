@@ -31,8 +31,14 @@ const ProductSchema = new mongoose.Schema({
     productStatus: {
         type: String,
     },
-    productOverallMinPrice: Number,
-    productOverallMaxPrice: Number,
+    productOverallMinPrice: {
+        type: Number,
+        default: 0
+    },
+    productOverallMaxPrice: {
+        type: Number,
+        default: 0
+    },
     productPricing: {
         price: Number,
         mrp: Number
@@ -45,6 +51,7 @@ const ProductSchema = new mongoose.Schema({
         type: String,
         default: 0
     },
+    selectedVarients: [String],
     productVarients: [{
         varienteAttributes: [
             {
@@ -63,7 +70,19 @@ const ProductSchema = new mongoose.Schema({
         },
         varDtl: [[String, String]]
     }],
-    simpleDtl: [[String, String]]
+    simpleDtl: [[String, String]],
+    productReviews: [{
+        userId: String,
+        rate: {
+            type: Number,
+            default: 0
+        },
+        review: String
+    }],
+    totalRate: {
+        type: Number,
+        default: 0
+    }
 });
 
 

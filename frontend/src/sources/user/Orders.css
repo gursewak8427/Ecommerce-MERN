@@ -1,3 +1,8 @@
+.wrapper.mt-10{
+    margin: 20px auto !important;
+    padding-top: 15px;
+    border-radius: 10px;
+}
 .orders{
     max-width: 1500px;
     width: 100%;
@@ -10,6 +15,24 @@
     padding-top: 10px;
     margin: 0 auto;
 }
+.dtl{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 0 20px;
+}
+.dtl > span{
+    padding: 1px;
+}
+.dtl > span span{
+    margin-right: 10px;
+}
+.dtl > span span:nth-child(1){
+    font-weight: bolder;
+}
+
 .orders .left{
     width: 70%;
     padding: 20px;
@@ -50,16 +73,22 @@
 }
 /* order-single */
 .order{
+    border-radius: 10px;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
     background: white;
-    margin: 20px 0;
+    margin-top: -18px;
+    margin-bottom: 38px;
+    border-bottom: 3px solid transparent;
 }
 .order.active{
-    box-shadow: 0px 0px 15px -1px rgba(0, 0, 0, 0.788);
+    box-shadow: 0px 0px 25px -1px rgba(0, 0, 0, 0.4);
+}
+.order:hover{
+    border-bottom: 4px solid orange;
 }
 .order .top{
     width: 100%;
@@ -98,32 +127,32 @@
 .order .items{
     width: 100%;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
     flex-wrap: wrap;
 }
 .order .items .item{
-    min-width: 200px;
-    max-width: 200px;
+    min-width: 96%;
     height: auto;
-    margin: 10px 20px;
+    margin: 10px 2%;
     padding: 10px;
-    border-radius: 7px;
+    border-radius: 2px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    align-items: stretch;
     justify-content: flex-start;
     overflow: hidden;
+    border: 1px solid transparent;
 }
 .order .items .item:hover{
-    box-shadow: 0px 0px 15px -1px grey;
+    box-shadow: 0px 0px 15px -1px rgba(214, 213, 213, 0);
+    border: 1px solid orange;
 }
 .order .items .item .left{
     width: 200px;
-    height: 200px;
     padding: 0;
-    margin: 0;
+    margin-right: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -136,21 +165,20 @@
     max-width: 100%;
 }
 .order .items .item .contentF{
-    width: 100%;
+    max-width: 100%;
     text-align: center;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
 }
 .order .items .item .contentF span{
-    width: 100%;
     font-size: 100%;
+    text-align: left;
 }
 .order .items .item .contentF span span.attributes{
     font-size: 90%;
     margin: 0 5px;
-    color: orange;
+    color: black;
+    font-weight: bolder;
 }
 
 /* right */
@@ -164,16 +192,16 @@
 }
 .right.orderDetail .box{
     position: sticky;
-    top: 24%;
+    top: 15%;
     width: 95%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
     padding: 20px 5px;
-    margin-top: 20px;
+    padding-bottom: 50px;
     background: white;
-    box-shadow: 0px 0px 15px -1px rgba(0, 0, 0, 0.788);
+    box-shadow: 0px 0px 25px -1px rgba(0, 0, 0, 0.4);
 }
 .right.orderDetail .box > span{
     display: block;
@@ -189,7 +217,7 @@
 }
 
 .right.orderDetail .box > span > span{
-    font-size: 120%;
+    font-size: 100%;
     color: orange;
     font-weight: normal;
     letter-spacing: 1px;
@@ -210,6 +238,14 @@
     align-items: center;
     justify-content: flex-start;
 }
+.right.orderDetail .box .data li span{
+    position: absolute;
+    top: 23px;
+    font-size: 70%;
+    font-weight: lighter;
+    color: black;
+}
+
 .right.orderDetail .box .line{
     width: 6px !important;
     height: 100%;
@@ -271,10 +307,10 @@
     color: rgb(255, 196, 0);
 }
 .right.orderDetail .box li.active-3{
-    color: rgb(8, 245, 114);
+    color: rgb(0, 119, 255);
 }
 .right.orderDetail .box li.active-4{
-    color: rgb(0, 119, 255);
+    color: rgb(8, 245, 114);
 }
 .right.orderDetail .box li.active-1::before,
 .right.orderDetail .box li.active-2::before,
@@ -307,6 +343,17 @@
 .right.orderDetail .box li.mb-80{
     margin-bottom: 80px;
 }
+.getBill{
+    padding: 3px 20px !important;
+    border-radius: 5px;
+    margin: 5px 0;
+    background: whitesmoke;
+    text-align: center;
+    cursor: pointer;
+}
+.getBill:hover{
+    background: rgb(233, 229, 229);
+}
 
 @media screen and (max-width: 650px) {
     .orders{
@@ -329,12 +376,20 @@
     .order{
         width: 98%;
         margin: 10px 0;
+        margin-top: 35px;
     }
     .order .items .item{
-        max-width: calc(50% - 10px);
-        min-width: calc(50% - 10px);
+        max-width: 100%;
+        min-width: 100%;
+        flex-direction: column;
+        align-items: center;
         margin: 5px;
     }
+    .order .items .item img{
+        margin-bottom: 10px;
+        min-width: 100%;
+    }
+
     .right.orderDetail{
         width: 100%;
         min-height: calc(100vh - 68px);

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Redirect, Link } from 'react-router-dom'
 import axios from 'axios'
-import { authenticate, isAuth } from '../../../helpers/auth'
-
 import './AddProduct.css'
 import { KEYS } from '../../keys';
+import { useStateValue } from '../../../StateProvider/StateProvider';
+import { getTokenAdmin } from '../../../helpers/auth';
 
 function AddProduct({ stateChanger, finalCat, finalSubCat, ...rest }) {
+    const [store, dispatch] = useStateValue();
     const [state, setState] = useState({
         productName: '',
         productBrand: '',
@@ -20,6 +21,7 @@ function AddProduct({ stateChanger, finalCat, finalSubCat, ...rest }) {
         setState({ ...state, [e.target.name]: e.target.value })
     }
     const onSubmit = () => {
+        document.getElementById('subMitBtn').disabled = true
         if (state.productName && state.productBrand) {
             let newProduct = {
                 "parents": {
@@ -34,7 +36,13 @@ function AddProduct({ stateChanger, finalCat, finalSubCat, ...rest }) {
                 "productStatus": state.productStatus,
             }
             // upload product and get product id
-            axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertProduct`, newProduct)
+            axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertProduct`, newProduct,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            })
                 .then(result => {
                     setState({
                         ...state,
@@ -45,7 +53,9 @@ function AddProduct({ stateChanger, finalCat, finalSubCat, ...rest }) {
                         productStatus: 0,
                     });
 
-                    if (true) {
+                    document.getElementsByClassName('product-content')[0].classList.add('animate')
+                    setTimeout(() => {
+                        document.getElementsByClassName('product-content')[0].classList.remove('animate')
                         document.getElementsByClassName('timeLine3')[0].classList.remove('active')
                         document.getElementsByClassName('timeLine3')[1].classList.remove('active')
 
@@ -54,29 +64,32 @@ function AddProduct({ stateChanger, finalCat, finalSubCat, ...rest }) {
 
                         document.getElementsByClassName('timeLine4')[0].classList.add('active')
                         document.getElementsByClassName('timeLine4')[1].classList.add('active')
-                    }
 
-                    stateChanger(
-                        {
-                            ...state,
-                            ['task']: '4',
-                            ['selectedCategory']: finalCat,
-                            ['selectedSubCategory']: finalSubCat,
-                            ['finalProduct']: [result.data.productId, state.productName],
-                        }
-                    )
+                        stateChanger(
+                            {
+                                ...state,
+                                ['task']: '4',
+                                ['selectedCategory']: finalCat,
+                                ['selectedSubCategory']: finalSubCat,
+                                ['finalProduct']: [result.data.productId, state.productName],
+                            }
+                        )
+                    }, 500)
+                    document.getElementById('subMitBtn').disabled = false
                 })
                 .catch(err => {
+                    document.getElementById('subMitBtn').disabled = false
                     console.log(err)
                 })
         } else {
+            document.getElementById('subMitBtn').disabled = false
             alert('all fields are required')
         }
     }
     return (
         <>
             <div className="bottom_btns">
-                <button type='button' onClick={onSubmit} className='continue_btn' title='continue'><i className='fa fa-arrow-right'></i></button>
+                <button type='button' onClick={onSubmit} id='subMitBtn' className='continue_btn' title='continue'><i className='fa fa-arrow-right'></i></button>
             </div>
             <h1 className="product_for">{finalCat[1]} / {finalSubCat[1]}</h1>
             <div className="form-product">
@@ -97,7 +110,7 @@ function AddProduct({ stateChanger, finalCat, finalSubCat, ...rest }) {
                     <input type="text" name="productDisc" id="productDisc" value={state.productDisc} onChange={onChange} />
                 </div>
                 <div className="form-area">
-                    <label htmlFor="productkeywords">Product Keywords <small><i>(#keyword1, #keyword2, ....)</i></small></label>
+                    <label htmlFor="productkeywords">Product Keywords <small><i>(keyword1, keyword2, ....)</i></small></label>
                     <input type="text" name="productkeywords" id="productkeywords" value={state.productkeywords} onChange={onChange} />
                 </div>
                 <div className="form-area radio">

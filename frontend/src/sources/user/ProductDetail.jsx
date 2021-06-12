@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useStateValue } from '../../StateProvider/StateProvider';
 import './ProductDetail.css'
 import { KEYS } from '../keys'
+import { isAuthUser } from '../../helpers/auth'
 import { toast, ToastContainer } from 'react-toastify';
 
 function ProductDetail() {
@@ -24,20 +25,27 @@ function ProductDetail() {
     const [sVar, setSVar] = useState([])
     const [count, setCount] = useState(0)
     const [ofs, setOFS] = useState(false)
+    const [reviewList, setReviewList] = useState([])
+    const [rateTotal, setRateTotal] = useState(0)
+    const [rc, setRC] = useState(1)
+    const [rating, setRating] = useState({
+        rate: 0,
+        review: ''
+    })
 
     const getPrice = product => {
         var minPrice = product?.productVarients[0]?.general?.price
         var maxPrice = 0
         product.productVarients.map(varient => {
-            if (parseInt(varient.general.price) < minPrice) { minPrice = parseInt(varient.general.price) }
-            if (parseInt(varient.general.price) > maxPrice) { maxPrice = parseInt(varient.general.price) }
+            if (parseFloat(varient.general.price) < minPrice) { minPrice = parseFloat(varient.general.price) }
+            if (parseFloat(varient.general.price) > maxPrice) { maxPrice = parseFloat(varient.general.price) }
         })
         return (`${minPrice}-${maxPrice}`)
     }
     const getthisPrice = (product, sel) => {
         var p;
         if (sel) {
-            p = parseInt(sel.general.price)
+            p = parseFloat(sel.general.price)
         } else {
             p = getPrice(product)
         }
@@ -46,7 +54,7 @@ function ProductDetail() {
     const getthisMrp = (product, sel) => {
         var p = 0;
         if (sel) {
-            p = parseInt(sel.general.mrp)
+            p = parseFloat(sel.general.mrp)
         }
         setThisMrp(p)
     }
@@ -59,6 +67,19 @@ function ProductDetail() {
         setImgList(images)
         if (images.length > 1) {
             setBigImg(images[1])
+        }
+    }
+    const setSuggestList = productDtl => {
+        var user = store.user
+        if (user != '') {
+            // suggest Product List Update
+            axios.post(`${KEYS.NODE_URL}/api/user/addToSuggestionList`, { product: productDtl, userId: user.id })
+                .then(result => {
+                    console.log(result)
+                }).catch(err => {
+                    console.log(err)
+                })
+            // ==================
         }
     }
 
@@ -82,10 +103,17 @@ function ProductDetail() {
                     if (result.data.myCollection.productStatus == 0) {
                         history.push('/')
                     }
+                    if ((result.data.myCollection.productType == 1) && (result.data.myCollection.productVarients.length == 0)) {
+                        history.push('/')
+                    }
+
+                    setSuggestList(result.data.myCollection)
+
                     getthisPrice(result.data.myCollection, undefined)
                     getthisMrp(result.data.myCollection, undefined)
                     getImageList(result.data.myCollection, undefined)
                     if (store.rawdata.length == 0) {
+                        console.log('hello.................');
                         axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getRawData`)
                             .then(results => {
                                 setCatList([])
@@ -108,6 +136,10 @@ function ProductDetail() {
                                     result.data.myCollection.itemQty <= 0 ? setOFS(true) : setOFS(false)
                                 }
                                 setProduct(result.data.myCollection)
+                                let re = []
+                                result.data.myCollection.productReviews.map((r, i) => i < 8 ? re.push(r) : null)
+                                setReviewList(re)
+                                setRateTotal(result.data.myCollection.totalRate)
                                 setbigImg(result.data.myCollection.CoverImages[0])
                                 setParents([catName, subCatName])
                                 sorting(cList, scList)
@@ -139,7 +171,11 @@ function ProductDetail() {
                         if (result.data.myCollection.productType == 0) {
                             result.data.myCollection.itemQty <= 0 ? setOFS(true) : setOFS(false)
                         }
+                        let re = []
+                        result.data.myCollection.productReviews.map((r, i) => i < 8 ? re.push(r) : null)
+                        setReviewList(re)
                         setProduct(result.data.myCollection)
+                        setRateTotal(result.data.myCollection.totalRate)
                         setbigImg(result.data.myCollection.CoverImages[0])
                         setParents([catName, subCatName])
                         setCatList(cList)
@@ -197,7 +233,7 @@ function ProductDetail() {
         })
     }
 
-    //  varient Work
+    //  varient Work management...
     const selectVarient = () => {
         var data = { ids: [], common: [] }
         var newIds = []
@@ -358,6 +394,16 @@ function ProductDetail() {
         document.getElementsByClassName('_ac')[0].classList.toggle('active')
     }
 
+    const cartBtnAnimation = () => {
+        // animation on cartBoxBtn
+        document.getElementsByClassName('cartBox')[0].classList.add('animate')
+
+        setTimeout(function () {
+            document.getElementsByClassName('cartBox')[0].classList.remove('animate')
+        }, 2000);
+        // ===================
+    }
+
     const addToCart = () => {
         document.getElementById('addToCartProductDtlBtn').disabled = true
         document.getElementById('shortLoading').style.display = 'block'
@@ -420,12 +466,15 @@ function ProductDetail() {
         } else {
             item.userId = store.user.id
         }
+
         axios.post(`${KEYS.NODE_URL}/api/user/cart/156/add`, item).then(result => {
             dispatch({
                 type: 'ADD_TO_CART',
                 item: item.item
             })
+            cartBtnAnimation()
             toast.success('Added To Cart')
+
             document.getElementById('shortLoading').style.display = 'none'
             document.getElementById('addToCartProductDtlBtn').disabled = false
         }).catch(err => {
@@ -435,10 +484,63 @@ function ProductDetail() {
         })
     }
 
+    const rateNow = () => {
+        if (store.user == '') {
+            toast.error('First login please')
+            return
+        }
+        axios.post(`${KEYS.NODE_URL}/api/user/auth/156/ratingCheckProduct`, { product, userId: store.user.id }).then(result => {
+            document.getElementsByClassName('ratingNowDiv')[0].classList.toggle('active')
+        }).catch(err => {
+            console.log(err.response)
+            if (err?.response?.data?.error) {
+                toast.error(err?.response?.data.error)
+            } else {
+                toast.error('Something wrong')
+            }
+        })
+    }
+    const submitRatingNow = () => {
+        axios.post(`${KEYS.NODE_URL}/api/user/auth/156/setRating`, { product, userId: store.user.id, rating }).then(result => {
+            toast.success(result.data.message)
+            document.getElementsByClassName('ratingNowDiv')[0].classList.remove('active')
+            const newReview = {
+                userId: store.user.name,
+                rate: parseFloat(rating.rate),
+                review: rating.review
+            }
+            setReviewList([newReview, ...reviewList])
+            setRateTotal(rateTotal + parseFloat(rating.rate))
+            setRating({
+                ...rating,
+                rate: 0,
+                review: '',
+            })
+        }).catch(err => {
+            console.log(err.response)
+            if (err?.response?.data?.error) {
+                toast.error(err?.response?.data.error)
+            } else {
+                toast.error('Something wrong')
+            }
+        })
+    }
+
+    const getMoreReview = () => {
+        let prev = [...reviewList]
+        let newR = product.productReviews.splice(rc * 8, 8)
+        prev = [...prev, ...newR]
+        setReviewList(prev)
+        setRC(rc + 1);
+    }
+
     return (
         <>
             <div className="wrapper">
-                <ToastContainer />
+                <ToastContainer
+                    position="bottom-right"
+                />
+
                 {
                     store.loading ? (
                         <div className="loadingContainer">
@@ -586,12 +688,32 @@ function ProductDetail() {
                                         <label>
                                             <span>Rating & Reviews</span>
                                             <span>
-                                                <span className='rate A'>3.5&#9733;</span>
-                                                <span>4,523 ratings and 478 reviews</span>
+                                                <span className='rate A'>{parseFloat(rateTotal) == 0 ? '0 ' : (parseFloat(rateTotal) / parseFloat(reviewList.length)).toFixed(1)}&#9733;</span>
+                                                <span>{parseFloat(reviewList.length)} Review & Rating</span>
                                             </span>
-                                            <span>Rate</span>
+                                            <span onClick={rateNow}>Rate</span>
                                         </label>
-                                        <div className="allImages">
+                                        <div className="ratingNowDiv">
+                                            <span>
+                                                <span><b>Rate:</b> &nbsp;</span>
+                                                <select name="" id="" defaultValue={rating.rate} onChange={(e) => setRating({ ...rating, ['rate']: e.target.value })}>
+                                                    <option value="0.0">0.0</option>
+                                                    <option value="0.5">0.5</option>
+                                                    <option value="1.0">1.0</option>
+                                                    <option value="1.5">1.5</option>
+                                                    <option value="2.0">2.0</option>
+                                                    <option value="2.5">2.5</option>
+                                                    <option value="3.0">3.0</option>
+                                                    <option value="3.5">3.5</option>
+                                                    <option value="4.0">4.0</option>
+                                                    <option value="4.5">4.5</option>
+                                                    <option value="5.0">5.0</option>
+                                                </select>
+                                            </span>
+                                            <textarea value={rating.review} onChange={(e) => setRating({ ...rating, ['review']: e.target.value })} placeholder='whats your review...' type="text" name="" id="" />
+                                            <button onClick={submitRatingNow} className='btn update'>Submit</button>
+                                        </div>
+                                        {/* <div className="allImages">
                                             <label>Images uploaded by customers:</label>
                                             <div className="imgs">
                                                 <img src="" alt="" />
@@ -610,45 +732,23 @@ function ProductDetail() {
                                                 <img src="" alt="" />
                                                 <img src="" alt="" />
                                             </div>
-                                        </div>
-                                        <div className="allReviews">
-                                            <div className="review">
-                                                <span>
-                                                    <span className="rate A">4.5&#9733;</span>
-                                                    <span className="text">Its nice product</span>
-                                                </span>
-                                                <div className="photos">
-                                                    <img src="" alt="" />
-                                                    <img src="" alt="" />
-                                                    <img src="" alt="" />
-                                                </div>
-                                                <span>Gursewak Singh</span>
-                                            </div>
-                                            <div className="review">
-                                                <span>
-                                                    <span className="rate A">4.5&#9733;</span>
-                                                    <span className="text">Its nice producte producte producte producte producte product</span>
-                                                </span>
-                                                <div className="photos">
-                                                    <img src="" alt="" />
-                                                    <img src="" alt="" />
-                                                    <img src="" alt="" />
-                                                </div>
-                                                <span>Gursewak Singh</span>
-                                            </div>
-                                            <div className="review">
-                                                <span>
-                                                    <span className="rate A">4.5&#9733;</span>
-                                                    <span className="text">Its nice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice produnice product</span>
-                                                </span>
-                                                <div className="photos">
-                                                    <img src="" alt="" />
-                                                    <img src="" alt="" />
-                                                    <img src="" alt="" />
-                                                </div>
-                                                <span>Gursewak Singh</span>
-                                            </div>
-                                            <div className="bottom">All 349 Reviews&#10146;</div>
+                                        </div> */}
+                                        <div className="allReviews" id='allReviews'>
+                                            {console.log('revv', reviewList)}
+                                            {
+                                                reviewList.map((r, index) => (
+                                                    <div className="review">
+                                                        <span>
+                                                            <span className="rate A">{r.rate}&#9733;</span>
+                                                            <span className="text">{r.review}</span>
+                                                        </span>
+                                                        <span>{r.userId}</span>
+                                                    </div>
+                                                ))
+                                            }
+                                            {
+                                                product?.productReviews?.length > rc * 8 ? <div className="bottom" onClick={getMoreReview}>More Reviews</div> : null
+                                            }
                                         </div>
                                     </div>
                                 </div>

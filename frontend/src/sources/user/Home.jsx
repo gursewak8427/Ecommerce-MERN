@@ -1,3 +1,4 @@
+import { BottomScrollListener } from 'react-bottom-scroll-listener';
 import React, { useEffect, useState } from 'react';
 import { useHistory } from "react-router-dom";
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -5,7 +6,7 @@ import SwiperCore, { Autoplay, Navigation, A11y } from 'swiper';
 import axios from 'axios'
 import { useStateValue } from '../../StateProvider/StateProvider';
 import { KEYS } from '../keys'
-import { authenticateUser, isAuthUser, setCookie } from '../../helpers/auth'
+import { isAuthUser, setCookie } from '../../helpers/auth'
 import Product from './common/Product';
 import { ToastContainer, toast } from 'react-toastify';
 
@@ -20,12 +21,38 @@ function Home() {
     SwiperCore.use([Autoplay, Navigation, A11y])
 
     const [store, dispatch] = useStateValue();
+    const [mainStatus, setMainStatus] = useState(false);
 
     const [state, setState] = useState({
         catList: [],
         subCatList: [],
         productList: [],
+        suggestProductList: [],
     })
+    const [empty, setEmpty] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    const bottomHit = () => {
+        if (!empty && store.user != '') {
+            setEmpty(true)
+            setLoading(true)
+            console.log('Loading Suggestions....')
+            // fetch Suggested Products
+            axios.post(`${KEYS.NODE_URL}/api/user/getSuggestProducts`, { userId: store.user?.id })
+                .then(result => {
+                    state.suggestProductList = []
+                    result.data.items.map(img => state.suggestProductList.push(img))
+                    setState({
+                        ...state,
+                        suggestProductList: state.suggestProductList,
+                    })
+                    setLoading(false)
+                }).catch(err => {
+                    console.log(err)
+                    setLoading(false)
+                })
+        }
+    }
 
     useEffect(() => {
         dispatch({
@@ -53,12 +80,8 @@ function Home() {
                 console.log(err)
             })
 
-        let user = isAuthUser()
-        if (user) {
-            dispatch({
-                type: 'LOGIN_USER',
-                data: user
-            })
+        let user = store.user
+        if (user != '') {
             axios.post(`${KEYS.NODE_URL}/api/user/cart/156/get`, { userId: user.id })
                 .then(result => {
                     dispatch({
@@ -83,16 +106,14 @@ function Home() {
                 .then(result => {
                     state.catList = []
                     state.subCatList = []
-                    state.catList = result.data.myRawData.categories
-                    state.subCatList = result.data.myRawData.subCategories
-                    setState({
-                        ...state,
-                        catList: state.catList,
-                        subCatList: state.subCatList,
-                    });
-                    sortCat()
-                    sortSubCat()
-                    fetchProducts(state.catList)
+                    let catList = result.data.myRawData.categories
+                    let subCatList = result.data.myRawData.subCategories
+                    dispatch({
+                        type: 'UNSET_LOADING'
+                    })
+                    sortCat(catList)
+                    sortSubCat(subCatList)
+                    fetchProducts()
                 })
                 .catch(err => {
                     console.log(err.response)
@@ -114,6 +135,7 @@ function Home() {
                 dispatch({
                     type: 'UNSET_LOADING'
                 })
+                setMainStatus(true)
                 setState({
                     ...state,
                     catList: state.catList,
@@ -124,8 +146,7 @@ function Home() {
         }
     }, [])
 
-    function sortCat() {
-        var catList = state.catList
+    function sortCat(catList) {
         for (let j = 0; j < catList.length; j += 1) {
             for (let i = 0; i < catList.length - j; i += 1) {
                 if (catList[i + 1]) {
@@ -134,15 +155,15 @@ function Home() {
             }
         }
         function swapingCat(a, b) {
-            let Temp = state.catList[a]
-            state.catList[a] = state.catList[b]
-            state.catList[b] = Temp
-            setState({ ...state, catList: state.catList })
+            let Temp = catList[a]
+            catList[a] = catList[b]
+            catList[b] = Temp
         }
+        catList.map(cat => state.catList.push(cat))
+        setState({ ...state, catList: catList })
     }
 
-    function sortSubCat() {
-        var subCatList = state.subCatList
+    function sortSubCat(subCatList) {
         for (let j = 0; j < subCatList.length; j += 1) {
             for (let i = 0; i < subCatList.length - j; i += 1) {
                 if (subCatList[i + 1]) {
@@ -151,11 +172,12 @@ function Home() {
             }
         }
         function swapingSubCat(a, b) {
-            let Temp = state.subCatList[a]
-            state.subCatList[a] = state.subCatList[b]
-            state.subCatList[b] = Temp
-            setState({ ...state, subCatList: state.subCatList })
+            let Temp = subCatList[a]
+            subCatList[a] = subCatList[b]
+            subCatList[b] = Temp
         }
+        subCatList.map(sc => state.subCatList.push(sc))
+        setState({ ...state, subCatList: subCatList })
     }
 
     function fetchProducts() {
@@ -179,7 +201,6 @@ function Home() {
                 }
                 axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/product/get/category`, data)
                     .then(result => {
-                        state.productList = []
                         state.productList = state.productList.concat([result.data.myCollection])
                         setState({
                             ...state,
@@ -194,6 +215,7 @@ function Home() {
                                 products: result.data.myCollection
                             }
                         })
+                        setMainStatus(true)
                     })
                     .catch(err => {
                         console.log(err)
@@ -201,6 +223,7 @@ function Home() {
             }
         })
     }
+
     const goToCategory = cat => {
         let newCat = {
             _id: cat._id,
@@ -220,10 +243,14 @@ function Home() {
     const goToLink = link => {
         history.push(link);
     }
+
+
     return (
         <>
             <div className="wrapper">
-                <ToastContainer />
+                <ToastContainer
+                    position="bottom-right"
+                />
                 {
                     store.loading ? (
                         <div className="loadingContainer">
@@ -246,68 +273,100 @@ function Home() {
                                 }
                                 <div className="overlay"></div>
                             </Swiper>
-                            <div className="content">
-                                <div className="row">
-                                    {state.catList.map((cat, catIndex) => (
-                                        cat.categoryIndex <= 4 && cat.categoryStatus == 1 ? (
-                                            <div className="box-1" key={catIndex}>
-                                                <label htmlFor="">{cat.categoryName}</label>
-                                                <div className="data">
-                                                    {
-                                                        state.subCatList.map((subCat, subCatIndex) =>
-                                                            subCat.subCategoryIndex <= 4 && subCat.subCategoryStatus == 1 ?
-                                                                subCat.subCategoryParent == cat._id ?
-                                                                    <div key={subCatIndex} className="sub-box-1" onClick={() => goToSubCat(cat, subCat)}>
-                                                                        <span>{subCat.subCategoryName}</span>
-                                                                        <div className="img">
-                                                                            <img src={subCat.subCategoryImage} />
-                                                                        </div>
-                                                                    </div> : null : null
-                                                        )
-                                                    }
-                                                </div>
-                                            </div>
-                                        ) : null
-                                    ))}
-                                </div>
-                                {/* <div className="row">
+                            {
+                                mainStatus ?
+                                    <div className="content">
+                                        <div className="row">
+                                            {state.catList.map((cat, catIndex) => (
+                                                cat.categoryIndex <= 4 && cat.categoryStatus == 1 ? (
+                                                    <div className="box-1" key={catIndex}>
+                                                        <label htmlFor="">{cat.categoryName}</label>
+                                                        <div className="data">
+                                                            {
+                                                                state.subCatList.map((subCat, subCatIndex) =>
+                                                                    subCat.subCategoryIndex <= 4 && subCat.subCategoryStatus == 1 ?
+                                                                        subCat.subCategoryParent == cat._id ?
+                                                                            <div key={subCatIndex} className="sub-box-1" onClick={() => goToSubCat(cat, subCat)}>
+                                                                                <span>{subCat.subCategoryName}</span>
+                                                                                <div className="img">
+                                                                                    <img src={subCat.subCategoryImage} />
+                                                                                </div>
+                                                                            </div> : null : null
+                                                                )
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                ) : null
+                                            ))}
+                                        </div>
+                                        {/* <div className="row">
                                     <div className="add-box">Add - 1</div>
                                     <div className="add-box">Add - 2</div>
                                     <div className="add-box">Add - 3</div>
                                 </div> */}
-                                {
-                                    state.productList.map((obj, index) => {
-                                        return obj.myProducts.length == 0 ? null : (
-                                            <div key={index} className="row-slider a" >
-                                                <div className="header">
-                                                    <div className="label">{obj.category.categoryName}</div>
-                                                    <div className="right">
-                                                        <button onClick={() => goToCategory(obj.category)}>view all</button>
+                                        {
+                                            state.productList.map((obj, index) => {
+                                                return obj.myProducts.length == 0 ? null : (
+                                                    <div key={index} className="row-slider a" >
+                                                        <div className="header">
+                                                            <div className="label">{obj.category.categoryName}</div>
+                                                            <div className="right">
+                                                                <button onClick={() => goToCategory(obj.category)}>view all</button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="items">
+                                                            {
+                                                                obj.myProducts.map((product, productIndex) => {
+                                                                    return ((product.productPricing == undefined || product.productPricing.price == "") && (product.productType == 0) || (product.productStatus == 0) || ((product.productVarients.length == 0) && (product.productType == 1))) ? null : (
+                                                                        <Product
+                                                                            key={productIndex}
+                                                                            product={product}
+                                                                            productIndex={productIndex}
+                                                                        />
+                                                                    )
+                                                                })
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })
+                                        }
+                                        {/* suggestProductRow */}
+                                        {
+                                            loading ? 'Loading...' : null
+                                        }
+                                        {
+                                            state.suggestProductList.length == 0 ? null :
+                                                <div className="row-slider a aa">
+                                                    <div className="header">
+                                                        <div className="label">{store.user.name}, suggested for you</div>
+                                                        {/* <div className="right">
+                                                    <button onClick={() => alert('view all in pending')}>view all</button>
+                                                </div> */}
+                                                    </div>
+                                                    <div className="items">
+                                                        {
+                                                            state.suggestProductList.map((product, productIndex) => {
+                                                                return ((product.productPricing == undefined || product.productPricing.price == "") && (product.productType == 0) || (product.productStatus == 0)) ? null : (
+                                                                    <Product
+                                                                        key={productIndex}
+                                                                        product={product}
+                                                                        productIndex={productIndex}
+                                                                    />
+                                                                )
+                                                            })
+                                                        }
                                                     </div>
                                                 </div>
-
-                                                <div className="items">
-                                                    {
-                                                        obj.myProducts.map((product, productIndex) => {
-                                                            return ((product.productPricing == undefined || product.productPricing.price == "") && (product.productType == 0) || (product.productStatus == 0)) ? null : (
-                                                                <Product
-                                                                    key={productIndex}
-                                                                    product={product}
-                                                                    productIndex={productIndex}
-                                                                />
-                                                            )
-                                                        })
-                                                    }
-                                                </div>
-                                            </div>
-                                        )
-                                    })
-                                }
-                            </div>
+                                        }
+                                    </div> : null
+                            }
                         </>
                     )
                 }
             </div>
+            <BottomScrollListener onBottom={bottomHit} />
         </>
     );
 }

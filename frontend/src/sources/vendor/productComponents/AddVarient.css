@@ -17,6 +17,53 @@
     align-items: center;
     justify-content: flex-start;
 }
+.popupSelectedVarients *{
+    margin: 0;
+    padding: 0;
+}
+.popupSelectedVarients.active{
+    display: flex;
+}
+.popupSelectedVarients .btnss{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+.popupSelectedVarients .btnss button{
+    border-radius: 5px !important; 
+    text-transform: capitalize;
+}
+
+.popupSelectedVarients{
+    width: 40%;
+    z-index: 99999;
+    position: fixed;
+    top: 10%;
+    right: 10%;
+    padding: 20px;
+    border-radius: 5px;
+    display: none;
+    flex-direction: column;
+    background: white;
+    box-shadow: 0 0 10px -1px white;
+}
+.popupSelectedVarients span{
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: flex-end;
+    margin: 5px;
+}
+.popupSelectedVarients span label{
+    font-weight: bolder;
+    text-transform: capitalize;
+}
+.popupSelectedVarients span input{
+    list-style-type: none;
+    font-weight: bolder;
+    margin: 0 10px 3px;
+}
 .simpleDtl{
     background: rgba(29, 28, 28, 0.274);
     width: 100%;
@@ -141,6 +188,13 @@ button.delete{
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
+}
+.form-general .generalProduct .left .form-area.s-p-t select{
+    background: white;
+    border-radius: 5px;
+    border: none;
+    width: 100%;
+    padding: 10px;
 }
 .form-general .generalProduct .left .form-area select{
     background: white;
@@ -457,4 +511,13 @@ button.delete{
     background: rgba(0, 0, 0, 0.411);
 }
 
+@media screen and (max-width: 650px){
+   .form-general .generalProduct{
+        flex-direction: column-reverse;    
+   }
+   .form-general .generalProduct .left,
+   .form-general .generalProduct .right{
+       width: 100%;
+   }
 
+}

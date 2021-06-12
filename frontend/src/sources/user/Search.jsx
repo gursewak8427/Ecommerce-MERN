@@ -21,6 +21,8 @@ const Search = (props) => {
         maxPrice: -1,
         minMaxPrice: [-1, -1],
         filterCategory: -1,
+        filterCatName: 'all',
+        wait: false,
     })
 
     const bottomHit = () => {
@@ -29,8 +31,22 @@ const Search = (props) => {
         }
     }
 
+
     // on count change fetch more data
     useEffect(() => {
+        if (count == 1) {
+            window.scroll(0, 0)
+        }
+        console.log('a')
+        if (state.wait) {
+            console.log('b')
+            return
+        }
+        console.log('c')
+        setState({
+            ...state,
+            wait: true
+        })
         dispatch({
             type: 'SET_LOADING'
         })
@@ -44,21 +60,33 @@ const Search = (props) => {
         }
         axios.post(`${KEYS.NODE_URL}/api/user/search`, data).then(result => {
             if (result.data.items.length == 0) {
-                setState({ ...state, empty: true })
+                setState({ ...state, empty: true, wait: false })
             } else {
                 let d = listItems.concat(result.data.items)
                 setListItems(d)
-                setState({ ...state, empty: false })
+                setState({ ...state, empty: false, wait: false })
             }
             dispatch({ type: 'UNSET_LOADING' })
             dispatch({ type: 'SET_SEARCH_ITEM', item: searchItem })
         }).catch(err => {
             dispatch({ type: 'UNSET_LOADING' })
+            setState({ ...state, empty: false, wait: false })
             console.log(err)
         })
     }, [count])
 
     useEffect(() => {
+        if (count == 1) {
+            window.scroll(0, 0)
+        }
+        if (state.wait) {
+            return
+        }
+        setState({
+            ...state,
+            wait: true
+        })
+        console.log('wait set')
         dispatch({
             type: 'SET_LOADING'
         })
@@ -72,13 +100,13 @@ const Search = (props) => {
         }
         axios.post(`${KEYS.NODE_URL}/api/user/search`, data).then(result => {
             if (result.data.items.length == 0) {
-                setState({ ...state, empty: true })
+                setState({ ...state, empty: true, wait: false })
                 setListItems([])
             } else {
                 let d = []
                 result.data.items.map(item => d.push(item))
                 setListItems(d)
-                setState({ ...state, empty: false})
+                setState({ ...state, empty: false, wait: false })
                 setCount(1)
             }
             dispatch({ type: 'UNSET_LOADING' })
@@ -87,6 +115,7 @@ const Search = (props) => {
             dispatch({
                 type: 'UNSET_LOADING'
             })
+            setState({ ...state, empty: false, wait: false })
             console.log(err)
         })
     }, [searchItem, state.sortingMethod, state.minMaxPrice, state.filterCategory])
@@ -140,11 +169,9 @@ const Search = (props) => {
             ...state,
             sortingMethod: type
         })
-        window.scroll(0, 0)
     }
     const setFilter = type => {
         if (type == "price") {
-            window.scroll(0, 0)
             document.getElementById('filterBox').classList.toggle('active')
             document.getElementsByClassName('sortBtnFixed')[0].classList.toggle('active')
             setState({
@@ -159,8 +186,7 @@ const Search = (props) => {
             [e.target.name]: e.target.value
         })
     }
-    const setFilterCategory = id => {
-        window.scroll(0, 0)
+    const setFilterCategory = (id, name) => {
         document.getElementById('filterBox').classList.toggle('active')
         document.getElementsByClassName('sortBtnFixed')[0].classList.toggle('active')
 
@@ -171,7 +197,8 @@ const Search = (props) => {
         document.getElementsByClassName(`cat${id}`)[0].classList.add('active')
         setState({
             ...state,
-            filterCategory: id
+            filterCategory: id,
+            filterCatName: name
         })
     }
     const openFilterBox = () => {
@@ -182,7 +209,7 @@ const Search = (props) => {
     return (
         <>
             <div className="wrapper">
-                <div className='itemLabel'><i>Search for <b>{searchItem}</b></i></div>
+                <div className='itemLabel'><i>Search for <b>{searchItem}</b> in {state.filterCatName}</i> </div>
                 <div className="searchResultDiv">
                     <div className="sortBtnFixed" onClick={openFilterBox}>
                         <span>Sort</span>
@@ -192,10 +219,10 @@ const Search = (props) => {
                         <label htmlFor="">Filters</label>
                         <div className="categoryList">
                             <label htmlFor="" className="filterMain">Category</label>
-                            <li className={`category cat-1 active`} onClick={() => setFilterCategory(-1)}>All</li>
+                            <li className={`category cat-1 active`} onClick={() => setFilterCategory(-1, 'all')}>All</li>
                             {
                                 store?.rawdata?.categories?.map(cat =>
-                                    <li key={cat._id} onClick={() => setFilterCategory(cat._id)} className={`category cat${cat._id}`}>{cat.categoryName}</li>
+                                    <li key={cat._id} onClick={() => setFilterCategory(cat._id, cat.categoryName)} className={`category cat${cat._id}`}>{cat.categoryName}</li>
                                 )
                             }
                         </div>

@@ -3,12 +3,14 @@ import { Redirect, Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 import ImageUploader from 'react-images-upload'
 import { ToastContainer, toast } from 'react-toastify'
-import { authenticate, isAuth } from '../../../helpers/auth'
+import { getTokenAdmin } from '../../../helpers/auth';
 
 import './AddVarient.css'
 import { KEYS } from '../../keys';
+import { useStateValue } from '../../../StateProvider/StateProvider';
 
 function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest }) {
+    const [store, dispatch] = useStateValue();
     const [state, setState] = useState({
         finalProduct: finalProduct,
         productType: 0,
@@ -43,12 +45,45 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
         varDtl: [],
         varDtlKey: [],
         varDtlValue: [],
+
+        tempSelectedVarients: [],
+        selectedVarients: [],
     })
     const { id } = useParams()
     useEffect(() => {
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getProduct?p_id=${state.finalProduct[0]}`)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getSelectedVarients`, { pId: state.finalProduct[0] })
+            .then(r => {
+                state.selectedVarients = []
+                r.data.selectedVarients.map(obj => {
+                    state.selectedVarients.push(obj)
+                    state.tempSelectedVarients.push(obj)
+                })
+            })
+            .catch(err => console.log(err))
+        setState({
+            ...state,
+            tempSelectedVarients: state.tempSelectedVarients,
+            selectedVarients: state.selectedVarients
+        })
+    }, [])
+    useEffect(() => {
+        window.scroll(0, 0)
+        dispatch({
+            type: 'SET_LOADING'
+        })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getProduct?p_id=${state.finalProduct[0]}`,  {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
-                axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getAttribute`)
+                axios.get(`${KEYS.NODE_URL}/api/vendor/product/156/getAttribute`,  {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `barear ${getTokenAdmin()}`
+                      }
+                })
                     .then(resultAttr => {
                         state.varPrices = []
                         state.varMrps = []
@@ -109,7 +144,7 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                                 simpleDtl: state.simpleDtl,
                                 varDtl: state.varDtl,
                                 varDtlKey: state.varDtlKey,
-                                varDtlValue: state.varDtlValue
+                                varDtlValue: state.varDtlValue,
                             })
                             result.data.myProduct.productStatus == 1 ? (
                                 document.getElementById('proActiveStat').checked = true
@@ -124,23 +159,65 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                                 attributes: resultAttr.data.myAttributes,
                             })
                         }
+                        dispatch({
+                            type: 'UNSET_LOADING'
+                        })
                     }).catch(err => {
+                        dispatch({
+                            type: 'UNSET_LOADING'
+                        })
                         console.log(err)
                     })
             }).catch(err => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 console.log(err)
             })
     }, [])
     const onChange = (e) => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
         if (e.target.name == "productType") {
-            axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProductType?p_id=${state.finalProduct[0]}`, { 'pt': e.target.value })
+            axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProductType?p_id=${state.finalProduct[0]}`, { 'pt': e.target.value },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            })
                 .then(result => {
-                    console.log(result)
+                    dispatch({
+                        type: 'UNSET_LOADING'
+                    })
                 }).catch(err => {
+                    dispatch({
+                        type: 'UNSET_LOADING'
+                    })
                     console.log(err)
                 })
         }
-        setState({ ...state, [e.target.name]: e.target.value })
+        dispatch({
+            type: 'UNSET_LOADING'
+        })
+        var d = []
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/getSelectedVarients`, { pId: state.finalProduct[0] },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
+            .then(results => {
+                d = results.data.selectedVarients
+            })
+            .catch(err => console.log(err))
+        setState({
+            ...state,
+            setSelectedVarients: d,
+            [e.target.name]: e.target.value
+        })
     }
     const setAttr = (e, id) => {
         let new_value = e.target.value
@@ -185,10 +262,25 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
     }
     const makeVarient = () => {
         if (state.varients.length == 0) {
-            alert('plz select atleast one attribute of variation . . .')
+            toast.error('please select atleast one attribute of variation . . .')
+            // alert('please select atleast one attribute of variation . . .')
             return
         }
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertProductVarient?p_id=${state.finalProduct[0]}`, { varients: state.varients })
+        if (state.varients.length != state.selectedVarients.length) {
+            toast.error(`please select all variation( exact ${state.selectedVarients.length} )`)
+            // alert(`please select all variation( exact ${state.selectedVarients.length} )`)
+            return
+        }
+        dispatch({
+            type: 'SET_LOADING'
+        })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/insertProductVarient?p_id=${state.finalProduct[0]}`, { varients: state.varients },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
                 setState({
                     ...state,
@@ -216,8 +308,14 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                     state.varMrps.push(obj.general.mrp)
                 })
                 setState({ ...state, varPrices: state.varPrices, varItemQty: state.varItemQty, varMrps: state.varMrps, varientList: result.data.myVarients, varDtl: state.varDtl })
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
             })
             .catch(err => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 console.log(err)
             })
     }
@@ -251,13 +349,21 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
         });
     }
     const updateVar = (var_id, indexx) => {
-        // document.getElementById(`updateVarBtn${var_id}`).disabled = true
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let uploadPromises = state.pictures.map(image => {
             let data = new FormData();
             data.append('file', image);
             data.append('upload_preset', 'eshoppyzone');
             data.append('cloud_name', 'mycloud8427');
-            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data)
+            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            })
         })
         axios.all(uploadPromises)
             .then(results => {
@@ -277,7 +383,13 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                     "pt": state.productType,
                     "varDtl": state.varDtl[indexx]
                 }
-                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProductVarient?p_id=${state.finalProduct[0]}&var_id=${var_id}`, data)
+                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProductVarient?p_id=${state.finalProduct[0]}&var_id=${var_id}`, data,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `barear ${getTokenAdmin()}`
+                      }
+                })
                     .then(result => {
                         state.pictures = []
                         setState({
@@ -302,16 +414,23 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                             state.varMrps.push(obj.general.mrp)
                         })
                         setState({ ...state, varPrices: state.varPrices, varMrps: state.varMrps, varientList: result.data.myVarients })
-                        // document.getElementById(`updateVarBtn${var_id}`).disabled = false
+                        toast.success('Update successfully')
+                        dispatch({
+                            type: 'UNSET_LOADING'
+                        })
                     })
                     .catch(err => {
-                        // document.getElementById(`updateVarBtn${var_id}`).disabled = false
+                        dispatch({
+                            type: 'UNSET_LOADING'
+                        })
                         console.log(err)
                     })
             })
             .catch(e => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 console.log('error', e)
-                // document.getElementById(`updateVarBtn${var_id}`).disabled = false
             })
     }
     const onPriceChange = (e, index) => {
@@ -327,12 +446,20 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
         setState({ ...state, varMrps: state.varMrps });
     }
     const saveSimpleProduct = () => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let uploadPromises = state.ppictures.map(image => {
             let data = new FormData();
             data.append('file', image);
             data.append('upload_preset', 'eshoppyzone');
             data.append('cloud_name', 'mycloud8427');
-            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data)
+            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            })
         })
         axios.all(uploadPromises)
             .then(results => {
@@ -352,7 +479,13 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                     "simpleDtl": state.simpleDtl,
                     "simpleQty": state.simpleQty
                 }
-                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProductVarient?p_id=${state.finalProduct[0]}`, data)
+                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProductVarient?p_id=${state.finalProduct[0]}`, data,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `barear ${getTokenAdmin()}`
+                      }
+                })
                     .then(result => {
                         state.simpleDtl = []
                         result.data.myProduct?.simpleDtl.map(dtl => {
@@ -366,31 +499,50 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                             picUrls: [],
                             simpleDtl: state.simpleDtl
                         });
-                        alert('saved')
+                        dispatch({
+                            type: 'UNSET_LOADING'
+                        })
+                        toast.success('saved')
+                        // alert('saved')
                     })
                     .catch(err => {
+                        dispatch({
+                            type: 'UNSET_LOADING'
+                        })
                         console.log(err)
                     })
             })
             .catch(err => {
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
                 console.log(err)
             })
     }
     const uploadCoverImages = () => {
         if (state.CoverPictures.length == 0) {
-            alert('plz select atleast one image')
+            toast.error('plz select atleast one image')
+            // alert('plz select atleast one image')
             return
         }
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let uploadPromises = state.CoverPictures.map(image => {
             let data = new FormData();
             data.append('file', image);
             data.append('upload_preset', 'eshoppyzone');
             data.append('cloud_name', 'mycloud8427');
-            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data)
+            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            })
         })
         axios.all(uploadPromises)
             .then(results => {
-                console.log(results)
                 state.picUrls = []
                 results.map(img => {
                     state.picUrls.push(img.data.url)
@@ -402,7 +554,13 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                 let data = {
                     "images": state.picUrls,
                 }
-                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateCoverImages?p_id=${state.finalProduct[0]}`, data)
+                axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateCoverImages?p_id=${state.finalProduct[0]}`, data,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `barear ${getTokenAdmin()}`
+                      }
+                })
                     .then(result => {
                         state.CoverPictures = []
                         state.coverImagesList = []
@@ -415,19 +573,28 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                             CoverPictures: state.CoverPictures,
                             coverImagesList: state.coverImagesList
                         });
-                        // document.getElementById(`updateVarBtn${var_id}`).disabled = false
+                        dispatch({
+                            type: 'UNSET_LOADING'
+                        })
                     })
                     .catch(err => {
-                        // document.getElementById(`updateVarBtn${var_id}`).disabled = false
+                        dispatch({
+                            type: 'UNSET_LOADING'
+                        })
                         console.log(err)
                     })
             })
             .catch(e => {
                 console.log('error', e)
-                // document.getElementById(`updateVarBtn${var_id}`).disabled = false
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
             })
     }
     const onUpdate = () => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
         var myProduct = {
             "_id": state.finalProduct[0],
             "parents": {
@@ -442,7 +609,13 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
             "productStatus": state.productStatus,
         }
         // upload product and get product id
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProduct`, { myProduct })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/updateProduct`, { myProduct },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
                 setState({
                     ...state,
@@ -454,16 +627,29 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                     productStatus: result.data.product.productStatus,
                     finalProduct: [result.data.product._id, result.data.product.productName]
                 })
-                alert('update Successfully')
+                toast.success('update Successfully')
+                // alert('update Successfully')
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
             })
             .catch(err => {
                 console.log(err)
             })
     }
     const deleteVarImage = (pId, varId, imgId) => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let data = { pId, varId, imgId }
         // upload product and get product id
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteVarImage`, data)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteVarImage`, data,
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
                 setState({
                     ...state,
@@ -485,46 +671,94 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                     state.varMrps.push(obj.general.price)
                 })
                 setState({ ...state, varPrices: state.varPrices, varItemQty: state.varItemQty, varMrps: state.varMrps, varientList: result.data.myProduct.productVarients })
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
             })
             .catch(err => {
                 console.log(err)
             })
     }
     const deleteSimpleImage = (pId, imgId) => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let data = { pId, imgId }
-        // upload product and get product id
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteSimpleImage`, data)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteSimpleImage`, data,
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
                 setState({
                     ...state,
                     simpleImageList: result.data.myProduct.productImages
                 });
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
             })
             .catch(err => {
                 console.log(err)
             })
     }
     const addSimpleDtl = () => {
+        if (state.simpleDtlKey == '' || state.simpleDtlValue == '') {
+            // alert('All fields are required')
+            toast.error('All fields are required')
+            return
+        }
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let data = [state.simpleDtlKey, state.simpleDtlValue]
         state.simpleDtl.push(data)
         console.log(state.simpleDtl)
         setState({ ...state, simpleDtl: state.simpleDtl, simpleDtlKey: '', simpleDtlValue: '' })
+        dispatch({
+            type: 'UNSET_LOADING'
+        })
     }
     const deleteSimpleDtl = index => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
         state.simpleDtl.splice(index, 1)
         setState({ ...state, simpleDtl: state.simpleDtl })
+        dispatch({
+            type: 'UNSET_LOADING'
+        })
     }
 
     const addVarDtl = (index) => {
+        if (state.varDtlKey[index] == "" || state.varDtlValue[index] == "") {
+            toast.error('All Fields are required')
+            // alert('All Fields are required')
+            return
+        }
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let data = [state.varDtlKey[index], state.varDtlValue[index]]
         state.varDtl[index].push(data)
         state.varDtlKey[index] = ''
         state.varDtlValue[index] = ''
         setState({ ...state, varDtl: state.varDtl, varDtlKey: state.varDtlKey, varDtlValue: state.varDtlValue })
+        dispatch({
+            type: 'UNSET_LOADING'
+        })
     }
     const deleteVarDtl = (index, id) => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
         state.varDtl[index].splice(id, 1)
         setState({ ...state, varDtl: state.varDtl })
+        dispatch({
+            type: 'UNSET_LOADING'
+        })
     }
     const onVarDtlKeyChange = (e, index) => {
         state.varDtlKey[index] = e.target.value
@@ -535,8 +769,17 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
         setState({ ...state, varDtlValue: state.varDtlValue })
     }
     const deleteVar = (varId, indexx) => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
         let data = { pId: finalProduct[0], varId, indexx }
-        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteVar`, data)
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/deleteVar`, data,
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
             .then(result => {
                 setState({
                     ...state,
@@ -558,11 +801,72 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                     state.varMrps.push(obj.general.price)
                 })
                 setState({ ...state, varPrices: state.varPrices, varItemQty: state.varItemQty, varMrps: state.varMrps, varientList: result.data.myProduct.productVarients })
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
             })
             .catch(err => console.log(err))
     }
+    const setSelectedVarients = (id) => {
+        dispatch({
+            type: 'SET_LOADING'
+        })
+        let yes = 'abccc'
+        state.tempSelectedVarients.map((i, index) => i == id ? yes = index : null)
+        if (yes == 'abccc') {
+            state.tempSelectedVarients = [...state.tempSelectedVarients, id]
+            setState({
+                ...state,
+                tempSelectedVarients: state.tempSelectedVarients
+            })
+        } else {
+            let d = state.tempSelectedVarients
+            d.splice(yes, 1)
+            state.tempSelectedVarients = []
+            d.map(i => state.tempSelectedVarients.push(i))
+            setState({
+                ...state,
+                tempSelectedVarients: state.tempSelectedVarients
+            })
+        }
+        dispatch({
+            type: 'UNSET_LOADING'
+        })
+    }
+    const saveSelectedVar = () => {
+        state.selectedVarients = []
+        var d = []
+        state.tempSelectedVarients.map(i => d.push(i))
+        setState({
+            ...state,
+            selectedVarients: d
+        })
+        let data = {
+            pId: state.finalProduct[0],
+            selectedVarients: d
+        }
+        axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/setSelectedVarients`, data,
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        })
+            .then(result => {
+                document.getElementsByClassName('popupSelectedVarients')[0].classList.remove('active')
+            })
+            .catch(err => console.log(err))
+    }
+    const cancelSelectedVar = () => {
+        document.getElementsByClassName('popupSelectedVarients')[0].classList.remove('active')
+        setState({
+            ...state,
+            tempSelectedVarients: state.selectedVarients
+        })
+    }
     return (
         <>
+            <ToastContainer />
             <h1 className="product_for">{finalCat[1]} / {finalSubCat[1]} / {state.finalProduct[1]}</h1>
             {
                 id ? (
@@ -585,7 +889,7 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                             <input type="text" name="productDisc" id="productDisc" value={state.productDisc} onChange={onChange} />
                         </div>
                         <div className="form-area">
-                            <label htmlFor="productkeywords">Product Keywords <small><i>(#keyword1, #keyword2, ....)</i></small></label>
+                            <label htmlFor="productkeywords">Product Keywords <small><i>(keyword1, keyword2, ....)</i></small></label>
                             <input type="text" name="productkeywords" id="productkeywords" value={state.productkeywords} onChange={onChange} />
                         </div>
                         <div className="form-area radio">
@@ -607,7 +911,7 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                 <label htmlFor="productName">[ Variations ]</label>
                 <div className="generalProduct">
                     <div className="left">
-                        <div className="form-area">
+                        <div className="form-area s-p-t">
                             <label htmlFor="">Product Type</label>
                             <select name="productType" value={state.productType} onChange={onChange}>
                                 <option value="0">Simple Product</option>
@@ -616,10 +920,10 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                         </div>
                         {state.productType == 0 ? (
                             <>
-                                <div className="form-area mt-50">
+                                <div className="form-area mt-50" style={{ marginTop: '30px' }}>
                                     {
                                         state.simpleImageList.length == 0 ? (
-                                            <p>No Images, Please Upload Images for Product</p>
+                                            <p className="textNoFound">No Images, Please Upload Images for Product</p>
                                         ) : (
                                             <div className="pImgList">
                                                 {
@@ -634,12 +938,12 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                                         )
                                     }
                                 </div>
-                                <div className="form-area mt-50">
+                                <div className="form-area">
                                     <div className="productImgs">
                                         <ImageUploader
                                             withPreview={true}
                                             onChange={onImgDrop}
-                                            imgExtension={['.jpg', '.png']}
+                                            imgExtension={['.jpg', '.png', '.jpeg']}
                                             maxFileSize={5242880}
                                             buttonText={'Upload New Images'}
                                         />
@@ -690,25 +994,46 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                             </>
                         ) : state.productType == 1 ? (
                             <>
+                                <div>
+                                    {
+                                        state.varientList.length != 0 ? <button onClick={() => toast.error('You can\'t make changes after making varients otherwise delete your all varients. Because all varient must have equal no. of variations')}>Select Attributes (disabled)</button> :
+                                            <button onClick={() => document.getElementsByClassName('popupSelectedVarients')[0].classList.add('active')}>Select Attributes</button>
+                                    }
+                                </div>
+                                <div className="popupSelectedVarients">
+                                    {
+                                        state.attributes.map((obj, index) => (
+                                            <span key={obj._id}>
+                                                {/* htmlFor={`var${index}`} */}
+                                                <label>{obj.attribute}</label>
+                                                <input type="checkbox" onChange={(e) => setSelectedVarients(obj._id)} name={`var${index}`} id={`var${index}`} checked={!!state.tempSelectedVarients.includes(obj._id)} />
+                                            </span>
+                                        ))
+                                    }
+                                    <div className='btnss'>
+                                        <button className="update" onClick={saveSelectedVar}>Save</button>
+                                        <button className="delete" onClick={cancelSelectedVar}>cancel</button>
+                                    </div>
+                                </div>
                                 <div className="form-area blackBg">
                                     <label htmlFor="">
-                                        <span>
-                                            Select Attributes
-                                        </span>
+                                        <span>Select Attributes</span>
                                         <button onClick={makeVarient}>Add Varient</button>
                                     </label>
                                     <div className="data">
                                         {
-                                            state.attributes.map((obj) => (
-                                                <select key={obj._id} onChange={(e) => { setAttr(e, obj._id) }}>
-                                                    <option value="">Select {obj.attribute}</option>
-                                                    {
-                                                        obj.values.map((value, key) => (
-                                                            <option key={key} value={value}>{value}</option>
-                                                        ))
-                                                    }
-                                                </select>
-                                            ))
+                                            state.selectedVarients.length == 0 ? <span className='_nV'>First Select Variation....</span> :
+                                                state.attributes.map((obj) =>
+                                                    state.selectedVarients.includes(obj._id) ?
+                                                        <select key={obj._id} onChange={(e) => { setAttr(e, obj._id) }}>
+                                                            <option value="">Select {obj.attribute}</option>
+                                                            {
+                                                                obj.values.map((value, key) => (
+                                                                    <option key={key} value={value}>{value}</option>
+                                                                ))
+                                                            }
+                                                        </select> : null
+                                                )
                                         }
                                     </div>
                                 </div>
@@ -770,7 +1095,7 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                                                         <ImageUploader
                                                             withPreview={true}
                                                             onChange={onDrop}
-                                                            imgExtension={['.jpg', '.png']}
+                                                            imgExtension={['.jpg', '.png', '.jpeg']}
                                                             maxFileSize={5242880}
                                                             buttonText={'Upload New Images'}
                                                         />
@@ -832,11 +1157,23 @@ function AddVarient({ stateChanger, finalCat, finalSubCat, finalProduct, ...rest
                         <ImageUploader
                             withPreview={true}
                             onChange={onCoverDrop}
-                            imgExtension={['.jpg', '.png']}
+                            imgExtension={['.jpg', '.png', '.jpeg']}
                             maxFileSize={5242880}
-                            buttonText={'Upload Cover Images'}
+                            buttonText={`${
+                            state.CoverPictures.length == 0 ?
+                                state.coverImagesList.length == 0 ?
+                                    'Upload Cover Image' :
+                                    'Change Cover Image' : ''
+
+                            }`}
+                            singleImage={true}
                         />
-                        <span onClick={uploadCoverImages}>Upload</span>
+                        {
+                            state.CoverPictures.length != 0 ?
+                                state.coverImagesList.length == 0 ?
+                                    <span onClick={uploadCoverImages}>Upload Cover Image</span> :
+                                    <span onClick={uploadCoverImages}>Change Cover Image</span> : null
+                        }
                         <div className="CoverImageList">
                             {
                                 state.coverImagesList.map((img, index) => (

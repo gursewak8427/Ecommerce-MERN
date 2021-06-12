@@ -8,6 +8,7 @@ import './Category.css'
 import { useStateValue } from '../../StateProvider/StateProvider';
 import { useHistory } from "react-router-dom";
 import { KEYS } from '../keys'
+import { ToastContainer } from 'react-toastify';
 
 function Category() {
     let history = useHistory();
@@ -35,6 +36,7 @@ function Category() {
 
     // on count change fetch more data
     useEffect(() => {
+        console.log(count);
         dispatch({
             type: 'SET_LOADING'
         })
@@ -46,13 +48,18 @@ function Category() {
         axios.post(`${KEYS.NODE_URL}/api/vendor/product/156/product/get/category`, data)
             .then(result => {
                 if (result.data.myCollection.myProducts.length == 0) {
-                    setState({ ...state, empty: true, filterSubCat: subCat })
-                    dispatch({
-                        type: 'UNSET_LOADING'
+                    if(count == 1){
+                        state.productList = []
+                    }
+                    setState({ 
+                        ...state,
+                        productList: state.productList,
+                        empty: true,
+                        filterSubCat: subCat
                     })
                 } else {
                     if (count == 1) {
-                        let d = document.getElementsByClassName('sc'+subCat)
+                        let d = document.getElementsByClassName('sc' + subCat)
                         d[0].scrollIntoView(false)
                         window.scroll(0, 0)
                         state.productList = []
@@ -62,12 +69,12 @@ function Category() {
                         ...state,
                         productList: state.productList,
                         filterSubCat: subCat,
-                        empty: false 
+                        empty: false
                     });
-                    dispatch({
-                        type: 'UNSET_LOADING'
-                    })
                 }
+                dispatch({
+                    type: 'UNSET_LOADING'
+                })
             })
             .catch(err => {
                 dispatch({
@@ -103,7 +110,7 @@ function Category() {
                     sorting(result.data.myRawData.categories, result.data.myRawData.subCategories)
                 })
         }
-    }, [])
+    }, [cat, subCat])
 
     // sorting subcat
     function sorting(catList, subCatList) {
@@ -159,6 +166,9 @@ function Category() {
 
     return (
         <div className="wrapper">
+            <ToastContainer
+                position="bottom-right"
+            />
             <div className="categoryTop">
                 <div className="main">
                     <i className="fas fa-arrow-circle-left"></i>
@@ -171,7 +181,10 @@ function Category() {
                     }
                 </div>
             </div>
-            <div className="items categoryPage">
+            <div className={`items categoryPage ${state.productList.length < 5 ? 'center' : ''}`}>
+                {
+                    state.productList == 0 ? <span>Sorry, No Product</span> : null
+                }
                 {
                     state.productList.map((product, productIndex) => {
                         return ((product.productPricing == undefined || product.productPricing.price == "") && (product.productType == 0) || (product.productStatus == 0)) ? null : (

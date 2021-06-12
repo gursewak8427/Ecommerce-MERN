@@ -1,25 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { Redirect, Link } from 'react-router-dom'
 import axios from 'axios'
-import { authenticate, isAuth } from '../../helpers/auth'
+import { getTokenAdmin } from '../../helpers/auth'
 import ImageUploader from 'react-images-upload'
 
 import './VSlider.css'
 import { KEYS } from '../keys';
+import { useStateValue } from '../../StateProvider/StateProvider';
 
 function VSlider() {
+    const [store, dispatch] = useStateValue();
     const [state, setState] = useState({
         newSliderName: '',
         newSliderLink: '',
         pictures: [],
         picUrls: [],
         sliderList: [],
-        updateIndex: undefined
+        updateIndex: undefined,
+        empty: false
     })
     useEffect(() => {
-        axios.get(`${KEYS.NODE_URL}/api/vendor/general/156/getSlider`).then(result => {
+        dispatch({ type: 'SET_LOADING' })
+        axios.get(`${KEYS.NODE_URL}/api/vendor/general/156/getSlider`,{
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        }).then(result => {
+            if (result.data.finalData.length == 0) {
+                setState({
+                    ...state,
+                    empty: true
+                })
+            }
+            dispatch({ type: 'UNSET_LOADING' })
             setState({ ...state, sliderList: result.data.finalData })
-        }).catch(err => console.log(err))
+        }).catch(err => {
+            dispatch({ type: 'UNSET_LOADING' })
+            console.log(err)
+        })
     }, [])
     const onInputChange = (e) => {
         setState({ ...state, [e.target.name]: e.target.value });
@@ -45,16 +64,22 @@ function VSlider() {
             alert('Plese Fill all Fields')
             return
         }
-        if(state.pictures.length != 2){
+        if (state.pictures.length != 2) {
             alert('Please select two images')
             return
         }
+        dispatch({ type: 'SET_LOADING' })
         let uploadPromises = state.pictures.map(image => {
             let data = new FormData();
             data.append('file', image);
             data.append('upload_preset', 'eshoppyzone');
             data.append('cloud_name', 'mycloud8427');
-            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data)
+            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            })
         })
         axios.all(uploadPromises).then(results => {
             state.picUrls = []
@@ -67,12 +92,24 @@ function VSlider() {
                 "link": state.newSliderLink,
                 "img": state.picUrls,
             }
-            axios.post(`${KEYS.NODE_URL}/api/vendor/general/156/insertSlider`, data).then(result => {
+            axios.post(`${KEYS.NODE_URL}/api/vendor/general/156/insertSlider`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            }).then(result => {
+                dispatch({ type: 'UNSET_LOADING' })
                 document.getElementsByClassName('addCat')[0].classList.toggle('show')
                 document.getElementsByClassName('add_new')[0].classList.toggle('open')
                 setState({ ...state, sliderList: result.data.finalData.mainSlider })
-            }).catch(err => console.log(err))
-        }).catch(e => console.log('error', e))
+            }).catch(err => {
+                dispatch({ type: 'UNSET_LOADING' })
+                console.log(err)
+            })
+        }).catch(e => {
+            console.log('error', e)
+            dispatch({ type: 'UNSET_LOADING' })
+        })
     }
     const setUpdate = index => {
         setState({
@@ -85,16 +122,22 @@ function VSlider() {
         document.getElementsByClassName('add_new')[0].classList.add('open')
     }
     const updateSlider = () => {
-        if(state.pictures.length != 2){
+        if (state.pictures.length != 2) {
             alert('Please select two images')
             return
         }
+        dispatch({ type: 'SET_LOADING' })
         let uploadPromises = state.pictures.map(image => {
             let data = new FormData();
             data.append('file', image);
             data.append('upload_preset', 'eshoppyzone');
             data.append('cloud_name', 'mycloud8427');
-            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data)
+            return axios.post(`https://api.cloudinary.com/v1_1/mycloud8427/image/upload/`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            })
         })
         axios.all(uploadPromises).then(results => {
             state.picUrls = []
@@ -108,21 +151,42 @@ function VSlider() {
                 link: state.newSliderLink,
                 img: state.picUrls
             }
-            axios.post(`${KEYS.NODE_URL}/api/vendor/general/156/updateSlider`, data).then(result => {
+            axios.post(`${KEYS.NODE_URL}/api/vendor/general/156/updateSlider`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `barear ${getTokenAdmin()}`
+                  }
+            }).then(result => {
+                dispatch({ type: 'UNSET_LOADING' })
                 document.getElementsByClassName('addCat')[0].classList.toggle('show')
                 document.getElementsByClassName('add_new')[0].classList.toggle('open')
                 setState({ ...state, sliderList: result.data.finalData.mainSlider })
-            }).catch(err => console.log(err.response))
-        }).catch(e => console.log('error', e))
+            }).catch(err => {
+                dispatch({ type: 'UNSET_LOADING' })
+                console.log(err.response)
+            })
+        }).catch(e => {
+            dispatch({ type: 'UNSET_LOADING' })
+            console.log('error', e)
+        })
     }
     const deleteIndex = index => {
-        axios.post(`${KEYS.NODE_URL}/api/vendor/general/156/deleteSlider`, { index }).then(result => {
+        dispatch({ type: 'SET_LOADING' })
+        axios.post(`${KEYS.NODE_URL}/api/vendor/general/156/deleteSlider`, { index }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `barear ${getTokenAdmin()}`
+              }
+        }).then(result => {
+            dispatch({ type: 'UNSET_LOADING' })
             setState({ ...state, sliderList: result.data.finalData.mainSlider })
-        }).catch(err => console.log(err.response))
+        }).catch(err => {
+            console.log(err.response)
+            dispatch({ type: 'UNSET_LOADING' })
+        })
     }
     return (
         <>
-            {!isAuth() ? <Redirect to='/vendor/login' /> : null}
             <div className="bottom_btns">
                 <button type='button' className='add_new' onClick={openNewSliderBox}>+</button>
             </div>
@@ -139,7 +203,7 @@ function VSlider() {
                     <ImageUploader
                         withPreview={true}
                         onChange={onDrop}
-                        imgExtension={['.jpg', '.png']}
+                        imgExtension={['.jpg', '.png','.jpeg']}
                         maxFileSize={5242880}
                         buttonText={'Upload New Images'}
                     />
@@ -157,7 +221,7 @@ function VSlider() {
                     <div className="product-content">
                         <div className="sliderList">
                             {
-                                state.sliderList.length == 0 ? <span style={{color: "white", margin: "10px"}}>No Slider Available</span> : null
+                                state.empty ? <span style={{ color: "white", margin: "10px" }}>No Slider Available</span> : null
                             }
                             {
                                 state.sliderList.map((slide, index) => (

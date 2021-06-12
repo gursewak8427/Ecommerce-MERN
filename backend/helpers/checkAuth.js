@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-export default UserAuth = (req, res, next) => {
+const UserAuth = (req, res, next) => {
     try {
         const token = req.headers.authorization.split(" ")[1];
         const decodedToken = jwt.verify(
@@ -8,10 +8,14 @@ export default UserAuth = (req, res, next) => {
         );
         req.userData = {
             phone: decodedToken.phone,
-            id: decodedToken.id
+            id: decodedToken.id,
+            name: decodedToken.name
         };
+        console.log(req.userData)
         next();
     } catch (error) {
         res.status(401).json({ message: "Auth failed!" });
     }
 };
+
+module.exports = UserAuth

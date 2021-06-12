@@ -17,7 +17,6 @@ const Product = ({ productIndex, product }) => {
     const [count, setCount] = useState([0])
     const [selectedVarient, setSelecctedVarient] = useState(undefined)
     const [ofs, setOFS] = useState(false)
-
     useEffect(() => {
         if (product.productType == 0) {
             product.itemQty <= 0 ? setOFS(true) : setOFS(false)
@@ -67,7 +66,7 @@ const Product = ({ productIndex, product }) => {
 
     useEffect(() => {
         getImgPath()
-        if(product.productType == 1){
+        if (product.productType == 1) {
             getthisPrice()
         }
     })
@@ -162,16 +161,24 @@ const Product = ({ productIndex, product }) => {
         document.getElementById(`atr${index}${product._id}${attrId}`).classList.add('active')
     }
 
+    const cartBtnAnimation = () => {
+        // animation on cartBoxBtn
+        document.getElementsByClassName('cartBox')[0].classList.add('animate')
+
+        setTimeout(function () {
+            document.getElementsByClassName('cartBox')[0].classList.remove('animate')
+        }, 2000);
+        // ===================
+    }
+
     const addToCart = () => {
-        document.getElementById('shortLoading').style.display = 'block'
-        document.getElementById('addToCartProductBtn').disabled = true
+        dispatch({ type: 'SET_NAVLOADING' })
         if (product.productType == 1) {
             let stat = true
             store.cart.map(i => i.id == product._id && i.varient._id == selectedVarient?._id ? stat = false : null)
             if (!stat) {
                 toast.error('Item Already in Cart')
-                document.getElementById('shortLoading').style.display = 'none'
-                document.getElementById('addToCartProductBtn').disabled = false
+                dispatch({ type: 'UNSET_NAVLOADING' })
                 return
             }
             var item = {
@@ -190,8 +197,7 @@ const Product = ({ productIndex, product }) => {
             store.cart.map(i => i.id == product._id ? stat = false : null)
             if (!stat) {
                 toast.error('Item Already in Cart')
-                document.getElementById('shortLoading').style.display = 'none'
-                document.getElementById('addToCartProductBtn').disabled = false
+                dispatch({ type: 'UNSET_NAVLOADING' })
                 return
             }
             var item = {
@@ -206,15 +212,13 @@ const Product = ({ productIndex, product }) => {
                 }
             }
         } else {
-            document.getElementById('shortLoading').style.display = 'none'
-            document.getElementById('addToCartProductBtn').disabled = false
+            dispatch({ type: 'UNSET_NAVLOADING' })
             alert('something went wrong... (: ')
         }
 
         if (store.user == '') {
             document.getElementById('signup').classList.add('open')
-            document.getElementById('shortLoading').style.display = 'none'
-            document.getElementById('addToCartProductBtn').disabled = false
+            dispatch({ type: 'UNSET_NAVLOADING' })
             dispatch({
                 type: 'CART_PENDING',
                 item
@@ -226,20 +230,32 @@ const Product = ({ productIndex, product }) => {
 
 
         axios.post(`${KEYS.NODE_URL}/api/user/cart/156/add`, item).then(result => {
-            document.getElementById('shortLoading').style.display = 'none'
-            document.getElementById('addToCartProductBtn').disabled = false
+            dispatch({ type: 'UNSET_NAVLOADING' })
             dispatch({
                 type: 'ADD_TO_CART',
                 item: item.item
             })
+            cartBtnAnimation()
+            setSuggestList(product)
+
             toast.success('Added To Cart')
         }).catch(err => {
-            document.getElementById('shortLoading').style.display = 'none'
-            document.getElementById('addToCartProductBtn').disabled = false
+            dispatch({ type: 'UNSET_NAVLOADING' })
             toast.error('Something Wrong')
         })
 
     }
+
+    const setSuggestList = productDtl => {
+        // suggest Product List Update
+        axios.post(`${KEYS.NODE_URL}/api/user/addToSuggestionList`, { product: productDtl, userId: store.user.id })
+            .then(result => {
+                console.log(result)
+            }).catch(err => {
+                console.log(err)
+            })
+    }
+
 
     const getPrice = product => {
         var minPrice = product?.productVarients[0]?.general?.price
@@ -322,7 +338,14 @@ const Product = ({ productIndex, product }) => {
                 </div>
             </div> */}
             <img onClick={productDtl} src={imgPath} />
-            <div onClick={productDtl} className='name'>{product.productName}</div>
+            <div onClick={productDtl} className='name'>
+                {
+                    product.productName.length > 25 ? 
+                        <marquee>{product.productName}</marquee> 
+                        :
+                        <span>{product.productName}</span>
+                }
+            </div>
             {
                 product.productType == 1 ? (
                     <div className="topDetails">
@@ -369,7 +392,7 @@ const Product = ({ productIndex, product }) => {
                             {
                                 selectedVarient || product.productType == 0 ? (
                                     <div className="btns">
-                                        <button id='addToCartProductBtn' onClick={addToCart}>Add to cart</button>
+                                        <button id='addToCartProductBtn btnDisabledPl' onClick={addToCart}>Add to cart</button>
                                         {/* <button>Buy now</button> */}
                                     </div>
                                 ) : null
